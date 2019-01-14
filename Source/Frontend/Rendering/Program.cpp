@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
-#include "program.h"
+#include "Program.h"
 
-#include "shader.h"
+#include "Shader.h"
 
-using namespace jones;
+using namespace JoNES;
 
 Program::Program()
 {
@@ -40,29 +40,27 @@ void Program::Bind() const
 	GL_CHECK_ERROR(glUseProgram(handle));
 }
 
-void Program::BindTexture(GLuint texture, std::string uniformName, GLenum slot)
+void Program::BindTexture(std::string uniformName, GLenum slot, GLuint texture)
 {
-	glActiveTexture(slot);
-	glBindTexture(slot, texture);
+	GL_CHECK_ERROR(glActiveTexture(slot));
 
-	glUniform1i(GetUniformLocation(uniformName), slot - GL_TEXTURE0);
-
-	GL_CHECK_ERROR("BindTexture");
+	GL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, texture));
+	GL_CHECK_ERROR(glUniform1i(GetUniformLocation(uniformName), slot - GL_TEXTURE0));
 }
 
 void Program::SetVector3(const std::string& uniformName, const float* v)
 {
-	glUniform3f(GetUniformLocation(uniformName), v[0], v[1], v[2]);
+	GL_CHECK_ERROR(glUniform3f(GetUniformLocation(uniformName), v[0], v[1], v[2]));
 }
 
 void Program::SetVector4(const std::string& uniformName, const float* v)
 {
-	glUniform4f(GetUniformLocation(uniformName), v[0], v[1], v[2], v[3]);
+	GL_CHECK_ERROR(glUniform4f(GetUniformLocation(uniformName), v[0], v[1], v[2], v[3]));
 }
 
 void Program::SetMatrix44(const std::string& uniformName, const float* m)
 {
-	glUniformMatrix4fv(GetUniformLocation(uniformName), 1, GL_FALSE, m);	
+	GL_CHECK_ERROR(glUniformMatrix4fv(GetUniformLocation(uniformName), 1, GL_FALSE, m));
 }
 
 GLint Program::GetUniformLocation(const std::string& name)

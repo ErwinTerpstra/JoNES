@@ -1,7 +1,7 @@
 #ifndef _GLUTIL_H_
 #define _GLUTIL_H_
 
-#include "../debug.h"
+#include "Debug.h"
 
 #define GL_NO_CALL
 

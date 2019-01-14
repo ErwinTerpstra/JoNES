@@ -3,7 +3,7 @@
 
 #include "libgl.h" 
 
-namespace jones
+namespace JoNES
 {
 	class Shader
 	{

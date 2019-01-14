@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "shader.h"
+#include "Shader.h"
 
-using namespace jones;
+using namespace JoNES;
 
 Shader::Shader(GLenum type)
 {

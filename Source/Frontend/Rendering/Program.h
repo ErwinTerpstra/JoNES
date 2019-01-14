@@ -3,7 +3,7 @@
 
 #include "libgl.h"
 
-namespace jones
+namespace JoNES
 {
 	class Shader;
 
@@ -26,7 +26,7 @@ namespace jones
 		void Link();
 		void Bind() const;
 
-		void BindTexture(GLuint texture, std::string uniformName, GLenum slot);
+		void BindTexture(std::string uniformName, GLenum slot, GLuint texture);
 		
 		void SetVector3(const std::string& uniformName, const float* v);
 		void SetVector4(const std::string& uniformName, const float* v);

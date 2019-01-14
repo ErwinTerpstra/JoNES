@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-using namespace jones;
+using namespace JoNES;
 
 Window::Window(GLFWwindow* handle) : handle(handle)
 {
@@ -29,10 +29,26 @@ void Window::MakeCurrent() const
 	glfwMakeContextCurrent(handle);
 }
 
+void Window::SetSwapInterval(int interval) const
+{
+	glfwSwapInterval(interval);
+}
+
 void Window::Present()
 {
 	glfwSwapBuffers(handle);
 }
+
+void Window::GetWindowSize(int* width, int* height) const
+{
+	glfwGetWindowSize(handle, width, height);
+}
+
+void Window::GetFrameBufferSize(int* width, int* height) const
+{
+	glfwGetFramebufferSize(handle, width, height);
+}
+
 
 Window* Window::Create(int width, int height, const char* title)
 {

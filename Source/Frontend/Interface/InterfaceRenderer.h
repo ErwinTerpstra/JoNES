@@ -1,16 +1,21 @@
-#ifndef _GUI_H_
-#define _GUI_H_
+#ifndef _INTERFACE_RENDERER_H_
+#define _INTERFACE_RENDERER_H_
 
 #include "Rendering/libgl.h" 
 
-namespace jones
+struct ImDrawData;
+
+namespace JoNES
 {
+	class Window;
+
 	class Program;
 	class Shader;
 
-	class GUI
+	class InterfaceRenderer
 	{
 	private:
+		Window& window;
 
 		GLuint fontTextureHandle;
 
@@ -21,13 +26,18 @@ namespace jones
 		unsigned int vboHandle, elementsHandle;
 
 	public:
-		GUI();
+		InterfaceRenderer(Window& window);
 
 		bool Init();
 		void Shutdown();
+		void Render();
 
 	private:
+		bool InitGraphicsObjects();
+		void DestroyGraphicsObjects();
 		bool CreateFontTexture();
+
+		void Draw(ImDrawData* draw_data);
 	};
 }
 

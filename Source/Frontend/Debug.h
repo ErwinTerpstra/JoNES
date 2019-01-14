@@ -1,7 +1,7 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
-namespace jones
+namespace JoNES
 {
 
 	class Debug
