@@ -6,17 +6,17 @@
 
 namespace libnes
 {
-	struct NES;
+	struct Device;
 
 	class MainMemory : public MemoryInterface
 	{
 	private:
-		NES* nes;
+		Device* device;
 
 		uint8_t* ram;
 
 	public:
-		MainMemory(NES* nes);
+		MainMemory(Device* device);
 		~MainMemory();
 
 		uint8_t Read(uint16_t address) const;

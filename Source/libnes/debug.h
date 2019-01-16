@@ -25,7 +25,7 @@ namespace libnes
 	}
 }
 
-#define assert(x) ((void)(!(x) && libnes::AssertHandler(#x, __FILE__, __LINE__)))
+#define assert(x) ((void)(!(x) && libnes::debug::AssertHandler(#x, __FILE__, __LINE__)))
 #else
 #define assert(x)
 #endif

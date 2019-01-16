@@ -1,6 +1,6 @@
 #include "Emulator.h"
 
-#include "NES.h"
+#include "Device.h"
 
 #include "CPU.h"
 #include "Memory/Memory.h"
@@ -13,9 +13,8 @@ using namespace libnes;
 
 Emulator::Emulator()
 {
-	nes = new NES();
-	nes->cpu = new CPU(nes);
-	nes->mainMemory = new Memory(*(new MainMemory(nes)));
+	device.cpu = new CPU(&device);
+	device.mainMemory = new Memory(*(new MainMemory(&device)));
 }
 
 Emulator::~Emulator()
@@ -23,12 +22,18 @@ Emulator::~Emulator()
 
 }
 
+void Emulator::Reset()
+{
+	device.cpu->Reset();
+}
+
 void Emulator::InsertCartridge(Cartridge* cartridge)
 {
-	nes->cartridge = cartridge;
+	device.cartridge = cartridge;
 }
 
 void Emulator::Update(float time)
 {
-
+	while (device.cpu->Time() < time)
+		device.cpu->ExecuteNextInstruction();
 }

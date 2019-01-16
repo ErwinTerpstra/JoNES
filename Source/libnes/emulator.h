@@ -1,19 +1,22 @@
 #ifndef _EMULATOR_H_
 #define _EMULATOR_H_
 
+#include "Device.h"
+
 namespace libnes
 {
-	struct NES;
 	class Cartridge;
 
 	class Emulator
 	{
 	private:
-		NES* nes;
+		Device device;
 
 	public:
 		Emulator();
 		~Emulator();
+
+		void Reset();
 
 		void InsertCartridge(Cartridge* cartridge);
 

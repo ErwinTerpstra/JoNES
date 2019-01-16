@@ -2,10 +2,11 @@
 #define _CPU_H_
 
 #include "environment.h"
+#include "nes.h"
 
 namespace libnes
 {
-	struct NES;
+	struct Device;
 
 	class CPU
 	{
@@ -27,34 +28,40 @@ namespace libnes
 			uint8_t p;
 			uint8_t x;
 			uint8_t y;
+			uint8_t s;
 
 			uint16_t pc;
-			uint16_t sp;
 		};
 
 		struct Instruction
 		{
 			uint8_t opcode;
-			uint8_t length;
-			uint8_t cycles;
+			const char* disassemblyFormat;
 
 			void (CPU::*handler)(uint8_t opcode, const uint8_t* operands);
-
-			char* disassemblyFormat;
 		};
 
 	private:
 		static const Instruction INSTRUCTION_MAP[256];
 
-		NES* nes;
+		Device* device;
+
+		uint64_t cycles;
 
 	public:
 		Registers registers;
 
 	public:
-		CPU(NES* nes);
+		CPU(Device* device);
+
+		void Reset();
 
 		const Instruction& ExecuteNextInstruction();
+
+		float Time() const
+		{
+			return cycles / (float) NES_NTSC_CPU_CLOCK_FREQUENCY;
+		}
 	};
 }
 

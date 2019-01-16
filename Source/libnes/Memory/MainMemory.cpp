@@ -1,11 +1,11 @@
 #include "MainMemory.h"
 
-#include "NES.h"
+#include "Device.h"
 #include "Cartridge.h"
 
 using namespace libnes;
 
-MainMemory::MainMemory(NES* nes) : nes(nes)
+MainMemory::MainMemory(Device* device) : device(device)
 {
 	ram = new uint8_t[0x0800];
 }
@@ -29,8 +29,8 @@ uint8_t MainMemory::Read(uint16_t address) const
 	if (address < 0x4020)
 		return 0; // TODO: APU and IO registers
 
-	if (nes->cartridge != NULL)
-		return nes->cartridge->Read(address);
+	if (device->cartridge != NULL)
+		return device->cartridge->Read(address);
 	else
 		return 0;
 }
@@ -46,6 +46,6 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 	if (address < 0x4020)
 		return; // TODO: APU and IO registers
 
-	if (nes->cartridge != NULL)
-		return nes->cartridge->Write(address, value);
+	if (device->cartridge != NULL)
+		return device->cartridge->Write(address, value);
 }

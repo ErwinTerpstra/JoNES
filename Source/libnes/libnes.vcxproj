@@ -127,7 +127,8 @@
     <ClInclude Include="Memory\MainMemory.h" />
     <ClInclude Include="Memory\Memory.h" />
     <ClInclude Include="Memory\MemoryInterface.h" />
-    <ClInclude Include="NES.h" />
+    <ClInclude Include="Device.h" />
+    <ClInclude Include="nes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge.cpp" />
