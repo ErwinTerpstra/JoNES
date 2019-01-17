@@ -125,7 +125,7 @@
     <ClInclude Include="environment.h" />
     <ClInclude Include="libnes.h" />
     <ClInclude Include="Memory\MainMemory.h" />
-    <ClInclude Include="Memory\Memory.h" />
+    <ClInclude Include="Memory\MemoryBus.h" />
     <ClInclude Include="Memory\MemoryInterface.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="nes.h" />
@@ -136,7 +136,7 @@
     <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="instructions.cpp" />
     <ClCompile Include="Memory\MainMemory.cpp" />
-    <ClCompile Include="Memory\Memory.cpp" />
+    <ClCompile Include="Memory\MemoryBus.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

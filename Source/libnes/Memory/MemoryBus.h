@@ -1,5 +1,5 @@
-#ifndef _MEMORY_H_
-#define _MEMORY_H_
+#ifndef _MEMORY_BUS_H_
+#define _MEMORY_BUS_H_
 
 #include "environment.h"
 
@@ -7,13 +7,13 @@ namespace libnes
 {
 	class MemoryInterface;
 
-	class Memory
+	class MemoryBus
 	{
 	private:
 		MemoryInterface& interface;
 
 	public:
-		Memory(MemoryInterface& interface);
+		MemoryBus(MemoryInterface& interface);
 
 		uint8_t ReadU8(uint16_t address) const;
 		uint16_t ReadU16(uint16_t address) const;

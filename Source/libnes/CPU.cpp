@@ -1,7 +1,7 @@
 #include "CPU.h"
 
 #include "Device.h"
-#include "Memory/Memory.h"
+#include "Memory/MemoryBus.h"
 
 #include "debug.h"
 
@@ -40,16 +40,132 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 
 	// Read all operands for this instruction into a small buffer
 	uint8_t operandBuffer[4];
-	device->mainMemory->Read(&operandBuffer[0], registers.pc + 1, instruction.length - 1);
+	device->mainMemory->Read(&operandBuffer[0], registers.pc + 1, 4);
 
 	// Increase the PC to point to the next instruction
-	registers.pc += instruction.length;
+	//registers.pc += instruction.length;
 
 	// Execute the instruction
 	(this->*instruction.handler)(opcode, &operandBuffer[0]);
 
 	// Increase the clock cycle count
-	cycles += instruction.cycles;
+	//cycles += instruction.cycles;
 
 	return instruction;
+}
+
+uint8_t CPU::ReadAddressed(uint8_t opcode, uint16_t pc) const
+{
+	MemoryBus* memory = device->mainMemory;
+
+	switch (opcode & 0x0F)
+	{
+		case 0x00:
+			assert(opcode == 0xA0 || opcode == 0xC0 || opcode == 0xE0);
+			return memory->ReadU8(pc + 1); // OPC #
+			break;
+
+		case 0x01:
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU16(memory->ReadU8(pc + 1)) + registers.y); // OPC ($LL),Y
+			else
+				return memory->ReadU8(memory->ReadU16(memory->ReadU8(pc + 1) + registers.x)); // OPC ($LL,X)
+
+		case 0x02:
+			assert(opcode == 0xA2);
+			return memory->ReadU8(pc + 1); // OPC #
+
+		case 0x03:
+			assert(false);
+			break;
+
+		case 0x04:
+			if ((opcode & 0x20) == 0x20)
+				return memory->ReadU8(memory->ReadU8(pc + 1)); // OPC $LL
+			else
+				return memory->ReadU8(memory->ReadU8(pc + 1) + registers.x); // OPC $LL,X
+
+		case 0x05:
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU8(pc + 1) + registers.x); // OPC $LL,X
+			else
+				return memory->ReadU8(memory->ReadU8(pc + 1)); // OPC $LL
+
+		case 0x06:
+			if (opcode == 0x96 || opcode == 0xB6)
+				return memory->ReadU8(memory->ReadU8(pc + 1) + registers.y); // OPC $LL,Y
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU8(pc + 1) + registers.x); // OPC $LL,X
+			else
+				return memory->ReadU8(memory->ReadU8(pc + 1)); // OPC $LL
+
+		case 0x07:
+			assert(false);
+			break;
+
+		case 0x08:
+			assert(false);
+			break;
+
+		case 0x09:
+			assert(opcode != 0x99);
+
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU16(pc + 1) + registers.y); // OPC $LLHH,Y
+			else
+				return memory->ReadU8(pc + 1); // OPC #
+
+		case 0x0A:
+			assert((opcode & 0x10) == 0x00 && (opcode & 0x80) == 0x00);
+			return registers.a;
+
+		case 0x0B:
+			assert(false);
+			break;
+
+		case 0x0C:
+			switch (opcode & 0xF0)
+			{
+				case 0x20:
+				case 0x40:
+				case 0x80:
+				case 0xA0:
+				case 0xC0:
+				case 0xE0:
+					return memory->ReadU8(memory->ReadU16(pc + 1)); // OPC $LLHH
+
+				case 0x60:
+					assert(false);
+					break;
+
+				case 0xB0:
+					return memory->ReadU8(memory->ReadU16(pc + 1) + registers.x); // OPC $LLHH,X
+			}
+			break;
+
+		case 0x0D:
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU16(pc + 1) + registers.x); // OPC $LLHH, X
+			else
+				return memory->ReadU8(memory->ReadU16(pc + 1)); // OPC $LLHH
+
+		case 0x0E:
+			assert(opcode != 0x90);
+
+			if (opcode == 0xBE)
+				return memory->ReadU8(memory->ReadU16(pc + 1) + registers.y); // OPC $LLHH,Y
+			if ((opcode & 0x10) == 0x10)
+				return memory->ReadU8(memory->ReadU16(pc + 1) + registers.x); // OPC $LLHH, X
+			else
+				return memory->ReadU8(memory->ReadU16(pc + 1)); // OPC $LLHH
+
+		case 0x0F:
+			assert(false);
+			break;
+	}
+}
+
+void CPU::WriteAddressed(uint8_t opcode, uint16_t pc, uint8_t value)
+{
+
 }

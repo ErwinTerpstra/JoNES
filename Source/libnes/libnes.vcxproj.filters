@@ -42,13 +42,13 @@
     <ClInclude Include="Memory\MainMemory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Memory\Memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="nes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\MemoryBus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -62,13 +62,13 @@
     <ClCompile Include="Cartridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Memory\Memory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Memory\MainMemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="instructions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\MemoryBus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

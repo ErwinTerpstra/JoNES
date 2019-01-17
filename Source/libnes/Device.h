@@ -4,13 +4,13 @@
 namespace libnes
 {
 	class CPU;
-	class Memory;
+	class MemoryBus;
 	class Cartridge;
 
 	struct Device
 	{
 		CPU* cpu;
-		Memory* mainMemory;
+		MemoryBus* mainMemory;
 
 		Cartridge* cartridge;
 	};

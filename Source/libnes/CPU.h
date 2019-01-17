@@ -62,6 +62,11 @@ namespace libnes
 		{
 			return cycles / (float) NES_NTSC_CPU_CLOCK_FREQUENCY;
 		}
+
+	private:
+		uint8_t ReadAddressed(uint8_t opcode, uint16_t pc) const;
+		void WriteAddressed(uint8_t opcode, uint16_t pc, uint8_t value);
+
 	};
 }
 

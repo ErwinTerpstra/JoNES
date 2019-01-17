@@ -3,7 +3,7 @@
 #include "Device.h"
 
 #include "CPU.h"
-#include "Memory/Memory.h"
+#include "Memory/MemoryBus.h"
 #include "Memory/MainMemory.h"
 
 #include "Cartridge.h"
@@ -14,7 +14,7 @@ using namespace libnes;
 Emulator::Emulator()
 {
 	device.cpu = new CPU(&device);
-	device.mainMemory = new Memory(*(new MainMemory(&device)));
+	device.mainMemory = new MemoryBus(*(new MainMemory(&device)));
 }
 
 Emulator::~Emulator()
