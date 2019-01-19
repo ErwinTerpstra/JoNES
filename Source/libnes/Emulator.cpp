@@ -30,6 +30,7 @@ void Emulator::Reset()
 void Emulator::InsertCartridge(Cartridge* cartridge)
 {
 	device.cartridge = cartridge;
+	Reset();
 }
 
 void Emulator::Update(float time)

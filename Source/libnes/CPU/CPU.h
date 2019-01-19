@@ -10,15 +10,34 @@ namespace libnes
 {
 	struct Device;
 
+	enum AddressingMode
+	{
+		ADDR_IMPL,		// Implied
+		ADDR_IMM,		// Immediate
+		ADDR_REL,		// Relative
+		ADDR_ZP,		// Zero page
+		ADDR_ZPX,		// Zero page, X indexed
+		ADDR_ZPY,		// Zero page, Y indexed
+		ADDR_IND,		// Indirect
+		ADDR_IZPX,		// Indirect from zero page, X pre-indexed
+		ADDR_IZPY,		// Indirect from zero page, Y post-indexed
+		ADDR_ABS,		// Absolute
+		ADDR_ABSX,		// Absolute, X indexed
+		ADDR_ABSY,		// Absolute, Y indexed
+		ADDR_INVALID,	// For invalid opcodes
+	};
+
 	class CPU
 	{
 	public:
 		struct Instruction
 		{
 			uint8_t opcode;
-			const char* disassemblyFormat;
+			AddressingMode addressingMode;
 
-			void (CPU::*handler)(uint8_t opcode, uint16_t pc);
+			const char* assembly;
+
+			void (CPU::*handler)(const Instruction& instruction, uint16_t pc);
 		};
 
 	private:
@@ -44,17 +63,32 @@ namespace libnes
 		}
 
 	private:
-		uint8_t ReadAddressed(uint8_t opcode, uint16_t pc) const;
-		void WriteAddressed(uint8_t opcode, uint16_t pc, uint8_t value);
+		uint16_t ResolveAddress(AddressingMode mode, uint16_t pc) const;
+		uint8_t ReadAddressed(AddressingMode mode, uint16_t pc) const;
+		void WriteAddressed(AddressingMode mode, uint16_t pc, uint8_t value);
 
-		void ora(uint8_t opcode, uint16_t pc);
-		void anda(uint8_t opcode, uint16_t pc);
-		void eor(uint8_t opcode, uint16_t pc);
-		void adc(uint8_t opcode, uint16_t pc);
-		void sbc(uint8_t opcode, uint16_t pc);
-		void cmp(uint8_t opcode, uint16_t pc);
-		void cpx(uint8_t opcode, uint16_t pc);
-		void cpy(uint8_t opcode, uint16_t pc);
+		void ora(const Instruction& instruction, uint16_t pc);
+		void anda(const Instruction& instruction, uint16_t pc);
+		void eor(const Instruction& instruction, uint16_t pc);
+		void adc(const Instruction& instruction, uint16_t pc);
+		void sbc(const Instruction& instruction, uint16_t pc);
+		void cmp(const Instruction& instruction, uint16_t pc);
+		void cpx(const Instruction& instruction, uint16_t pc);
+		void cpy(const Instruction& instruction, uint16_t pc);
+		void dec(const Instruction& instruction, uint16_t pc);
+		void dex(const Instruction& instruction, uint16_t pc);
+		void dey(const Instruction& instruction, uint16_t pc);
+		void inc(const Instruction& instruction, uint16_t pc);
+		void inx(const Instruction& instruction, uint16_t pc);
+		void iny(const Instruction& instruction, uint16_t pc);
+		void asl(const Instruction& instruction, uint16_t pc);
+		void rol(const Instruction& instruction, uint16_t pc);
+		void lsr(const Instruction& instruction, uint16_t pc);
+		void ror(const Instruction& instruction, uint16_t pc);
+		void asl_a(const Instruction& instruction, uint16_t pc);
+		void rol_a(const Instruction& instruction, uint16_t pc);
+		void lsr_a(const Instruction& instruction, uint16_t pc);
+		void ror_a(const Instruction& instruction, uint16_t pc);
 
 
 	};

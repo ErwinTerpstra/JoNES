@@ -27,7 +27,7 @@ namespace libnes
 
 		uint16_t pc;
 
-		uint8_t GetFlag(Flags flag)
+		bool GetFlag(Flags flag)
 		{
 			return READ_MASK(p, flag);
 		}

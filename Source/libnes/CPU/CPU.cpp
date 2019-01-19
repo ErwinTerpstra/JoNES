@@ -22,7 +22,7 @@ void CPU::Reset()
 	registers.y = 0x00;
 	registers.s = 0xFD;
 
-	registers.pc = 0x0000;
+	registers.pc = device->mainMemory->ReadU16(NES_RESET_VECTOR);
 }
 
 const CPU::Instruction& CPU::ExecuteNextInstruction()
@@ -44,7 +44,7 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	//registers.pc += instruction.length;
 
 	// Execute the instruction
-	(this->*instruction.handler)(opcode, registers.pc + 1);
+	(this->*instruction.handler)(instruction, registers.pc + 1);
 
 	// Increase the clock cycle count
 	//cycles += instruction.cycles;
@@ -52,166 +52,207 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	return instruction;
 }
 
-uint8_t CPU::ReadAddressed(uint8_t opcode, uint16_t pc) const
+uint16_t CPU::ResolveAddress(AddressingMode mode, uint16_t pc) const
 {
 	MemoryBus* memory = device->mainMemory;
 
-	switch (opcode & 0x0F)
+	switch (mode)
 	{
-		case 0x00:
-			assert(opcode == 0xA0 || opcode == 0xC0 || opcode == 0xE0);
-			return memory->ReadU8(pc); // OPC #
-			break;
+		case ADDR_IMM:
+			return pc;
 
-		case 0x01:
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU16(memory->ReadU8(pc)) + registers.y); // OPC ($LL),Y
-			else
-				return memory->ReadU8(memory->ReadU16(memory->ReadU8(pc) + registers.x)); // OPC ($LL,X)
+		case ADDR_ZP:
+			return memory->ReadU8(pc);
 
-		case 0x02:
-			assert(opcode == 0xA2);
-			return memory->ReadU8(pc); // OPC #
+		case ADDR_ZPX:
+			return memory->ReadU8(pc) + registers.x;
 
-		case 0x03:
+		case ADDR_ZPY:
+			return memory->ReadU8(pc) + registers.y;
+
+		case ADDR_IND:
+			return memory->ReadU16(pc);
+
+		case ADDR_IZPX:
+			return memory->ReadU16(memory->ReadU8(pc) + registers.x);
+
+		case ADDR_IZPY:
+			return memory->ReadU16(memory->ReadU8(pc)) + registers.y;
+
+		case ADDR_ABS:
+			return memory->ReadU16(pc);
+
+		case ADDR_ABSX:
+			return memory->ReadU16(pc) + registers.x;
+
+		case ADDR_ABSY:
+			return memory->ReadU16(pc) + registers.y;
+
+		case ADDR_REL:
+		case ADDR_IMPL:
+		case ADDR_INVALID:
+		default:
 			assert(false);
-			break;
-
-		case 0x04:
-			if ((opcode & 0x20) == 0x20)
-				return memory->ReadU8(memory->ReadU8(pc)); // OPC $LL
-			else
-				return memory->ReadU8(memory->ReadU8(pc) + registers.x); // OPC $LL,X
-
-		case 0x05:
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU8(pc) + registers.x); // OPC $LL,X
-			else
-				return memory->ReadU8(memory->ReadU8(pc)); // OPC $LL
-
-		case 0x06:
-			if (opcode == 0x96 || opcode == 0xB6)
-				return memory->ReadU8(memory->ReadU8(pc) + registers.y); // OPC $LL,Y
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU8(pc) + registers.x); // OPC $LL,X
-			else
-				return memory->ReadU8(memory->ReadU8(pc)); // OPC $LL
-
-		case 0x07:
-			assert(false);
-			break;
-
-		case 0x08:
-			assert(false);
-			break;
-
-		case 0x09:
-			assert(opcode != 0x99);
-
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU16(pc) + registers.y); // OPC $LLHH,Y
-			else
-				return memory->ReadU8(pc); // OPC #
-
-		case 0x0A:
-			assert((opcode & 0x10) == 0x00 && (opcode & 0x80) == 0x00);
-			return registers.a;
-
-		case 0x0B:
-			assert(false);
-			break;
-
-		case 0x0C:
-			switch (opcode & 0xF0)
-			{
-				case 0x20:
-				case 0x40:
-				case 0x80:
-				case 0xA0:
-				case 0xC0:
-				case 0xE0:
-					return memory->ReadU8(memory->ReadU16(pc)); // OPC $LLHH
-
-				case 0x60:
-					assert(false);
-					break;
-
-				case 0xB0:
-					return memory->ReadU8(memory->ReadU16(pc) + registers.x); // OPC $LLHH,X
-			}
-			break;
-
-		case 0x0D:
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU16(pc) + registers.x); // OPC $LLHH, X
-			else
-				return memory->ReadU8(memory->ReadU16(pc)); // OPC $LLHH
-
-		case 0x0E:
-			assert(opcode != 0x90);
-
-			if (opcode == 0xBE)
-				return memory->ReadU8(memory->ReadU16(pc) + registers.y); // OPC $LLHH,Y
-			if ((opcode & 0x10) == 0x10)
-				return memory->ReadU8(memory->ReadU16(pc) + registers.x); // OPC $LLHH, X
-			else
-				return memory->ReadU8(memory->ReadU16(pc)); // OPC $LLHH
-
-		case 0x0F:
-			assert(false);
-			break;
+			return 0xBADA;
 	}
 }
 
-void CPU::WriteAddressed(uint8_t opcode, uint16_t pc, uint8_t value)
+uint8_t CPU::ReadAddressed(AddressingMode mode, uint16_t pc) const
 {
-
+	uint16_t address = ResolveAddress(mode, pc);
+	return device->mainMemory->ReadU8(address);
 }
 
-void CPU::ora(uint8_t opcode, uint16_t pc)
+void CPU::WriteAddressed(AddressingMode mode, uint16_t pc, uint8_t value)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint16_t address = ResolveAddress(mode, pc);
+	device->mainMemory->WriteU8(address, value);
+}
+
+void CPU::ora(const Instruction& instruction, uint16_t pc)
+{
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::ora(registers, operand);
 }
 
-void CPU::anda(uint8_t opcode, uint16_t pc)
+void CPU::anda(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::anda(registers, operand);
 }
 
-void CPU::eor(uint8_t opcode, uint16_t pc)
+void CPU::eor(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::eor(registers, operand);
 }
 
-void CPU::adc(uint8_t opcode, uint16_t pc)
+void CPU::adc(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::adc(registers, operand);
 }
 
-void CPU::sbc(uint8_t opcode, uint16_t pc)
+void CPU::sbc(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::sbc(registers, operand);
 }
 
-void CPU::cmp(uint8_t opcode, uint16_t pc)
+void CPU::cmp(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::cmp(registers, operand);
 }
 
-void CPU::cpx(uint8_t opcode, uint16_t pc)
+void CPU::cpx(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::cpx(registers, operand);
 
 }
-void CPU::cpy(uint8_t opcode, uint16_t pc)
+void CPU::cpy(const Instruction& instruction, uint16_t pc)
 {
-	uint8_t operand = ReadAddressed(opcode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
 	ALU::cpy(registers, operand);
+}
+
+void CPU::dec(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+	
+	value = ALU::dec(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::dex(const Instruction& instruction, uint16_t pc)
+{
+	ALU::dex(registers);
+}
+
+void CPU::dey(const Instruction& instruction, uint16_t pc)
+{
+	ALU::dey(registers);
+}
+
+void CPU::inc(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+
+	value = ALU::inc(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::inx(const Instruction& instruction, uint16_t pc)
+{
+	ALU::inx(registers);
+}
+
+void CPU::iny(const Instruction& instruction, uint16_t pc)
+{
+	ALU::iny(registers);
+}
+
+void CPU::asl(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+
+	value = ALU::asl(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::rol(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+
+	value = ALU::rol(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::lsr(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+
+	value = ALU::lsr(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::ror(const Instruction& instruction, uint16_t pc)
+{
+	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint8_t value = device->mainMemory->ReadU8(address);
+
+	value = ALU::ror(registers, value);
+
+	device->mainMemory->WriteU16(address, value);
+}
+
+void CPU::asl_a(const Instruction& instruction, uint16_t pc)
+{
+	registers.a = ALU::asl(registers, registers.a);
+}
+
+void CPU::rol_a(const Instruction& instruction, uint16_t pc)
+{
+	registers.a = ALU::rol(registers, registers.a);
+}
+
+void CPU::lsr_a(const Instruction& instruction, uint16_t pc)
+{
+	registers.a = ALU::lsr(registers, registers.a);
+}
+
+void CPU::ror_a(const Instruction& instruction, uint16_t pc)
+{
+	registers.a = ALU::ror(registers, registers.a);
 }
