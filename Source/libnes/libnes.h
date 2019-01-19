@@ -3,8 +3,12 @@
 
 #include "nes.h"
 #include "Emulator.h"
-#include "CPU.h"
-#include "Memory.h"
 #include "Cartridge.h"
+
+#include "CPU/CPU.h"
+
+#include "Memory/MemoryBus.h"
+#include "Memory/MainMemory.h"
+#include "Memory/MemoryInterface.h"
 
 #endif

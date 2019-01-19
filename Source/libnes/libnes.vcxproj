@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{5F0CF095-A838-4558-97FF-9F87D30E9C2E}</ProjectGuid>
     <RootNamespace>libnes</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -118,7 +118,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Cartridge.h" />
-    <ClInclude Include="CPU.h" />
+    <ClInclude Include="CPU\ALU.h" />
+    <ClInclude Include="CPU\CPU.h" />
+    <ClInclude Include="CPU\Registers.h" />
+    <ClInclude Include="CPU\util.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="Emulator.h" />
     <ClInclude Include="CartridgeHeader.h" />
@@ -132,9 +135,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge.cpp" />
-    <ClCompile Include="CPU.cpp" />
+    <ClCompile Include="CPU\CPU.cpp" />
     <ClCompile Include="Emulator.cpp" />
-    <ClCompile Include="instructions.cpp" />
+    <ClCompile Include="CPU\instructions.cpp" />
     <ClCompile Include="Memory\MainMemory.cpp" />
     <ClCompile Include="Memory\MemoryBus.cpp" />
   </ItemGroup>

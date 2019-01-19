@@ -23,7 +23,7 @@
     <ProjectGuid>{78E0272E-C477-4B55-8194-A06963F9ECCB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Jones</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>Frontend</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

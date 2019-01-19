@@ -4,6 +4,8 @@
 #include "environment.h"
 #include "nes.h"
 
+#include "Registers.h"
+
 namespace libnes
 {
 	struct Device;
@@ -11,34 +13,12 @@ namespace libnes
 	class CPU
 	{
 	public:
-		enum Flags
-		{
-			FLAG_CARRY = 0,
-			FLAG_ZERO = 1,
-			FLAG_INTERRUPT_DISABLE = 2,
-			FLAG_DECIMAL_MODE = 3,
-			FLAG_BREAK = 4,
-			FLAG_OVERFLOW = 6,
-			FLAG_NEGATIVE = 7,
-		};
-
-		struct Registers
-		{
-			uint8_t a;
-			uint8_t p;
-			uint8_t x;
-			uint8_t y;
-			uint8_t s;
-
-			uint16_t pc;
-		};
-
 		struct Instruction
 		{
 			uint8_t opcode;
 			const char* disassemblyFormat;
 
-			void (CPU::*handler)(uint8_t opcode, const uint8_t* operands);
+			void (CPU::*handler)(uint8_t opcode, uint16_t pc);
 		};
 
 	private:
@@ -66,6 +46,16 @@ namespace libnes
 	private:
 		uint8_t ReadAddressed(uint8_t opcode, uint16_t pc) const;
 		void WriteAddressed(uint8_t opcode, uint16_t pc, uint8_t value);
+
+		void ora(uint8_t opcode, uint16_t pc);
+		void anda(uint8_t opcode, uint16_t pc);
+		void eor(uint8_t opcode, uint16_t pc);
+		void adc(uint8_t opcode, uint16_t pc);
+		void sbc(uint8_t opcode, uint16_t pc);
+		void cmp(uint8_t opcode, uint16_t pc);
+		void cpx(uint8_t opcode, uint16_t pc);
+		void cpy(uint8_t opcode, uint16_t pc);
+
 
 	};
 }

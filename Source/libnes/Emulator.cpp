@@ -2,7 +2,7 @@
 
 #include "Device.h"
 
-#include "CPU.h"
+#include "CPU/CPU.h"
 #include "Memory/MemoryBus.h"
 #include "Memory/MainMemory.h"
 
