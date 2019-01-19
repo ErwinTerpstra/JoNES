@@ -177,7 +177,7 @@ void CPU::ora(uint8_t opcode, uint16_t pc)
 void CPU::anda(uint8_t opcode, uint16_t pc)
 {
 	uint8_t operand = ReadAddressed(opcode, pc);
-	ALU::and_(registers, operand);
+	ALU::anda(registers, operand);
 }
 
 void CPU::eor(uint8_t opcode, uint16_t pc)
