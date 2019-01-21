@@ -10,7 +10,7 @@ namespace libnes
 {
 	struct Device;
 
-	enum AddressingMode
+	enum AddressingModeIdentifier
 	{
 		ADDR_IMPL,		// Implied
 		ADDR_IMM,		// Immediate
@@ -25,6 +25,13 @@ namespace libnes
 		ADDR_ABSX,		// Absolute, X indexed
 		ADDR_ABSY,		// Absolute, Y indexed
 		ADDR_INVALID,	// For invalid opcodes
+
+		LAST_ADDRESSING_MODE
+	};
+
+	struct AddressingMode
+	{
+		uint8_t instructionLength;
 	};
 
 	class CPU
@@ -33,7 +40,8 @@ namespace libnes
 		struct Instruction
 		{
 			uint8_t opcode;
-			AddressingMode addressingMode;
+			uint8_t cycleCount;
+			AddressingModeIdentifier addressingMode;
 
 			const char* assembly;
 
@@ -42,6 +50,7 @@ namespace libnes
 
 	private:
 		static const Instruction INSTRUCTION_MAP[256];
+		static const uint8_t ADDRESSING_MODE_LENGTHS[LAST_ADDRESSING_MODE];
 
 		Device* device;
 
@@ -63,9 +72,9 @@ namespace libnes
 		}
 
 	private:
-		uint16_t ResolveAddress(AddressingMode mode, uint16_t pc) const;
-		uint8_t ReadAddressed(AddressingMode mode, uint16_t pc) const;
-		void WriteAddressed(AddressingMode mode, uint16_t pc, uint8_t value);
+		uint16_t ResolveAddress(AddressingModeIdentifier mode, uint16_t pc) const;
+		uint8_t ReadAddressed(AddressingModeIdentifier mode, uint16_t pc) const;
+		void WriteAddressed(AddressingModeIdentifier mode, uint16_t pc, uint8_t value);
 
 		void ora(const Instruction& instruction, uint16_t pc);
 		void anda(const Instruction& instruction, uint16_t pc);

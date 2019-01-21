@@ -39,20 +39,23 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 		debug::Halt();
 		return instruction;
 	}
-	
+
+	uint16_t operandsAddress = registers.pc + 1;
+
 	// Increase the PC to point to the next instruction
-	//registers.pc += instruction.length;
+	uint8_t instructionLength = ADDRESSING_MODE_LENGTHS[instruction.addressingMode];
+	registers.pc += instructionLength;
 
 	// Execute the instruction
-	(this->*instruction.handler)(instruction, registers.pc + 1);
-
+	(this->*instruction.handler)(instruction, operandsAddress);
+	
 	// Increase the clock cycle count
-	//cycles += instruction.cycles;
+	cycles += instruction.cycleCount;
 
 	return instruction;
 }
 
-uint16_t CPU::ResolveAddress(AddressingMode mode, uint16_t pc) const
+uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t pc) const
 {
 	MemoryBus* memory = device->mainMemory;
 
@@ -97,13 +100,13 @@ uint16_t CPU::ResolveAddress(AddressingMode mode, uint16_t pc) const
 	}
 }
 
-uint8_t CPU::ReadAddressed(AddressingMode mode, uint16_t pc) const
+uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t pc) const
 {
 	uint16_t address = ResolveAddress(mode, pc);
 	return device->mainMemory->ReadU8(address);
 }
 
-void CPU::WriteAddressed(AddressingMode mode, uint16_t pc, uint8_t value)
+void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t pc, uint8_t value)
 {
 	uint16_t address = ResolveAddress(mode, pc);
 	device->mainMemory->WriteU8(address, value);
