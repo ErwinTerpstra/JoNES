@@ -57,7 +57,7 @@
     <ClInclude Include="CPU\Registers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CPU\util.h">
+    <ClInclude Include="util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,7 +77,7 @@
     <ClCompile Include="CPU\CPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CPU\instructions.cpp">
+    <ClCompile Include="CPU\opcodes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

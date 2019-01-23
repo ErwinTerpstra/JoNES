@@ -2,6 +2,8 @@
 
 #include "MemoryInterface.h"
 
+#include "util.h"
+
 using namespace libnes;
 
 MemoryBus::MemoryBus(MemoryInterface& interface) : interface(interface)
@@ -12,6 +14,12 @@ MemoryBus::MemoryBus(MemoryInterface& interface) : interface(interface)
 uint8_t MemoryBus::ReadU8(uint16_t address) const
 {
 	return interface.Read(address);
+}
+
+int8_t MemoryBus::ReadS8(uint16_t address) const
+{
+	uint8_t value = interface.Read(address);
+	return REINTERPRET(value, int8_t);
 }
 
 uint16_t MemoryBus::ReadU16(uint16_t address) const

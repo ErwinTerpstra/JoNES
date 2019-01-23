@@ -39,7 +39,7 @@ namespace libnes
 			registers.SetZNFromResult(registers.a);
 		}
 
-		void anda(Registers& registers, uint8_t operand)
+		void and$(Registers& registers, uint8_t operand)
 		{
 			registers.a = registers.a & operand;
 			registers.SetZNFromResult(registers.a);

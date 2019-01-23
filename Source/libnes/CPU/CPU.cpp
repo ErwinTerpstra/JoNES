@@ -55,41 +55,65 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	return instruction;
 }
 
-uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t pc) const
+void CPU::PushStackU8(uint8_t value)
+{
+	device->mainMemory->WriteU8(NES_STACK_START + registers.s, value);
+	registers.s -= 1;
+}
+
+void CPU::PushStackU16(uint16_t value)
+{
+	device->mainMemory->WriteU16(NES_STACK_START + registers.s - 1, value);
+	registers.s -= 2;
+}
+
+uint8_t CPU::PopStackU8()
+{
+	registers.s += 1;
+	return device->mainMemory->ReadU8(NES_STACK_START + registers.s);
+}
+
+uint16_t CPU::PopStackU16()
+{
+	registers.s += 2;
+	return device->mainMemory->ReadU16(NES_STACK_START + registers.s - 1);
+}
+
+uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const
 {
 	MemoryBus* memory = device->mainMemory;
 
 	switch (mode)
 	{
 		case ADDR_IMM:
-			return pc;
+			return operandAddress;
 
 		case ADDR_ZP:
-			return memory->ReadU8(pc);
+			return memory->ReadU8(operandAddress);
 
 		case ADDR_ZPX:
-			return memory->ReadU8(pc) + registers.x;
+			return memory->ReadU8(operandAddress) + registers.x;
 
 		case ADDR_ZPY:
-			return memory->ReadU8(pc) + registers.y;
+			return memory->ReadU8(operandAddress) + registers.y;
 
 		case ADDR_IND:
-			return memory->ReadU16(pc);
+			return memory->ReadU16(memory->ReadU16(operandAddress));
 
 		case ADDR_IZPX:
-			return memory->ReadU16(memory->ReadU8(pc) + registers.x);
+			return memory->ReadU16(memory->ReadU8(operandAddress) + registers.x);
 
 		case ADDR_IZPY:
-			return memory->ReadU16(memory->ReadU8(pc)) + registers.y;
+			return memory->ReadU16(memory->ReadU8(operandAddress)) + registers.y;
 
 		case ADDR_ABS:
-			return memory->ReadU16(pc);
+			return memory->ReadU16(operandAddress);
 
 		case ADDR_ABSX:
-			return memory->ReadU16(pc) + registers.x;
+			return memory->ReadU16(operandAddress) + registers.x;
 
 		case ADDR_ABSY:
-			return memory->ReadU16(pc) + registers.y;
+			return memory->ReadU16(operandAddress) + registers.y;
 
 		case ADDR_REL:
 		case ADDR_IMPL:
@@ -100,69 +124,69 @@ uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t pc) const
 	}
 }
 
-uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t pc) const
+uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress) const
 {
-	uint16_t address = ResolveAddress(mode, pc);
+	uint16_t address = ResolveAddress(mode, operandAddress);
 	return device->mainMemory->ReadU8(address);
 }
 
-void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t pc, uint8_t value)
+void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress, uint8_t value)
 {
-	uint16_t address = ResolveAddress(mode, pc);
+	uint16_t address = ResolveAddress(mode, operandAddress);
 	device->mainMemory->WriteU8(address, value);
 }
 
-void CPU::ora(const Instruction& instruction, uint16_t pc)
+void CPU::ora(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::ora(registers, operand);
 }
 
-void CPU::anda(const Instruction& instruction, uint16_t pc)
+void CPU::and$(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
-	ALU::anda(registers, operand);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
+	ALU::and$(registers, operand);
 }
 
-void CPU::eor(const Instruction& instruction, uint16_t pc)
+void CPU::eor(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::eor(registers, operand);
 }
 
-void CPU::adc(const Instruction& instruction, uint16_t pc)
+void CPU::adc(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::adc(registers, operand);
 }
 
-void CPU::sbc(const Instruction& instruction, uint16_t pc)
+void CPU::sbc(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::sbc(registers, operand);
 }
 
-void CPU::cmp(const Instruction& instruction, uint16_t pc)
+void CPU::cmp(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::cmp(registers, operand);
 }
 
-void CPU::cpx(const Instruction& instruction, uint16_t pc)
+void CPU::cpx(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::cpx(registers, operand);
 
 }
-void CPU::cpy(const Instruction& instruction, uint16_t pc)
+void CPU::cpy(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint8_t operand = ReadAddressed(instruction.addressingMode, pc);
+	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
 	ALU::cpy(registers, operand);
 }
 
-void CPU::dec(const Instruction& instruction, uint16_t pc)
+void CPU::dec(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 	
 	value = ALU::dec(registers, value);
@@ -170,19 +194,19 @@ void CPU::dec(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::dex(const Instruction& instruction, uint16_t pc)
+void CPU::dex(const Instruction& instruction, uint16_t operandAddress)
 {
 	ALU::dex(registers);
 }
 
-void CPU::dey(const Instruction& instruction, uint16_t pc)
+void CPU::dey(const Instruction& instruction, uint16_t operandAddress)
 {
 	ALU::dey(registers);
 }
 
-void CPU::inc(const Instruction& instruction, uint16_t pc)
+void CPU::inc(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::inc(registers, value);
@@ -190,19 +214,19 @@ void CPU::inc(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::inx(const Instruction& instruction, uint16_t pc)
+void CPU::inx(const Instruction& instruction, uint16_t operandAddress)
 {
 	ALU::inx(registers);
 }
 
-void CPU::iny(const Instruction& instruction, uint16_t pc)
+void CPU::iny(const Instruction& instruction, uint16_t operandAddress)
 {
 	ALU::iny(registers);
 }
 
-void CPU::asl(const Instruction& instruction, uint16_t pc)
+void CPU::asl(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::asl(registers, value);
@@ -210,9 +234,9 @@ void CPU::asl(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::rol(const Instruction& instruction, uint16_t pc)
+void CPU::rol(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::rol(registers, value);
@@ -220,9 +244,9 @@ void CPU::rol(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::lsr(const Instruction& instruction, uint16_t pc)
+void CPU::lsr(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::lsr(registers, value);
@@ -230,9 +254,9 @@ void CPU::lsr(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::ror(const Instruction& instruction, uint16_t pc)
+void CPU::ror(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, pc);
+	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::ror(registers, value);
@@ -240,22 +264,97 @@ void CPU::ror(const Instruction& instruction, uint16_t pc)
 	device->mainMemory->WriteU16(address, value);
 }
 
-void CPU::asl_a(const Instruction& instruction, uint16_t pc)
+void CPU::asl_a(const Instruction& instruction, uint16_t operandAddress)
 {
 	registers.a = ALU::asl(registers, registers.a);
 }
 
-void CPU::rol_a(const Instruction& instruction, uint16_t pc)
+void CPU::rol_a(const Instruction& instruction, uint16_t operandAddress)
 {
 	registers.a = ALU::rol(registers, registers.a);
 }
 
-void CPU::lsr_a(const Instruction& instruction, uint16_t pc)
+void CPU::lsr_a(const Instruction& instruction, uint16_t operandAddress)
 {
 	registers.a = ALU::lsr(registers, registers.a);
 }
 
-void CPU::ror_a(const Instruction& instruction, uint16_t pc)
+void CPU::ror_a(const Instruction& instruction, uint16_t operandAddress)
 {
 	registers.a = ALU::ror(registers, registers.a);
+}
+
+void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
+{
+	Flags flag;
+	bool branchOnSet = READ_BIT(instruction.opcode, 5);
+
+	// TODO: Create a look-up table for this
+	switch (instruction.opcode >> 5)
+	{
+	case 0x00:
+		flag = FLAG_NEGATIVE;
+		break;
+
+	case 0x01:
+		flag = FLAG_OVERFLOW;
+		break;
+
+	case 0x02:
+		flag = FLAG_CARRY;
+		break;
+
+	case 0x03:
+		flag = FLAG_ZERO;
+		break;
+	}
+
+	if (registers.GetFlag(flag) == branchOnSet)
+	{
+		int8_t offset = device->mainMemory->ReadS8(operandAddress);
+		registers.pc += offset;
+
+		++cycles;
+
+		// TODO: add cycle on page boundary cross
+	}
+}
+
+void CPU::brk(const Instruction& instruction, uint16_t operandAddress)
+{
+	PushStackU16(registers.pc);
+	PushStackU8(registers.p);
+
+	registers.SetFlag(FLAG_BREAK);
+	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
+
+	registers.pc = device->mainMemory->ReadU16(NES_INTERRUPT_VECTOR);
+}
+
+void CPU::rti(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.p = PopStackU8();
+	registers.pc = PopStackU16();
+}
+
+void CPU::jsr(const Instruction& instruction, uint16_t operandAddress)
+{
+	PushStackU16(registers.pc);
+
+	registers.pc = device->mainMemory->ReadU16(operandAddress);
+}
+
+void CPU::rts(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.pc = PopStackU16();
+}
+
+void CPU::jmp_abs(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.pc = device->mainMemory->ReadU16(operandAddress);
+}
+
+void CPU::jmp_ind(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.pc = device->mainMemory->ReadU16(device->mainMemory->ReadU16(operandAddress));
 }

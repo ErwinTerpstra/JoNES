@@ -16,6 +16,7 @@ namespace libnes
 		MemoryBus(MemoryInterface& interface);
 
 		uint8_t ReadU8(uint16_t address) const;
+		int8_t ReadS8(uint16_t address) const;
 		uint16_t ReadU16(uint16_t address) const;
 		void Read(uint8_t* buffer, uint16_t address, uint16_t length) const;
 		

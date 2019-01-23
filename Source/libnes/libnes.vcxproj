@@ -121,7 +121,7 @@
     <ClInclude Include="CPU\ALU.h" />
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\Registers.h" />
-    <ClInclude Include="CPU\util.h" />
+    <ClInclude Include="util.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="Emulator.h" />
     <ClInclude Include="CartridgeHeader.h" />

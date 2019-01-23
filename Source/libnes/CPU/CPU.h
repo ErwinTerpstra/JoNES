@@ -45,7 +45,7 @@ namespace libnes
 
 			const char* assembly;
 
-			void (CPU::*handler)(const Instruction& instruction, uint16_t pc);
+			void (CPU::*handler)(const Instruction& instruction, uint16_t operandAddress);
 		};
 
 	private:
@@ -72,34 +72,49 @@ namespace libnes
 		}
 
 	private:
-		uint16_t ResolveAddress(AddressingModeIdentifier mode, uint16_t pc) const;
-		uint8_t ReadAddressed(AddressingModeIdentifier mode, uint16_t pc) const;
-		void WriteAddressed(AddressingModeIdentifier mode, uint16_t pc, uint8_t value);
+		// Stack management
+		void PushStackU8(uint8_t value);
+		void PushStackU16(uint16_t value);
+		uint8_t PopStackU8();
+		uint16_t PopStackU16();
 
-		void ora(const Instruction& instruction, uint16_t pc);
-		void anda(const Instruction& instruction, uint16_t pc);
-		void eor(const Instruction& instruction, uint16_t pc);
-		void adc(const Instruction& instruction, uint16_t pc);
-		void sbc(const Instruction& instruction, uint16_t pc);
-		void cmp(const Instruction& instruction, uint16_t pc);
-		void cpx(const Instruction& instruction, uint16_t pc);
-		void cpy(const Instruction& instruction, uint16_t pc);
-		void dec(const Instruction& instruction, uint16_t pc);
-		void dex(const Instruction& instruction, uint16_t pc);
-		void dey(const Instruction& instruction, uint16_t pc);
-		void inc(const Instruction& instruction, uint16_t pc);
-		void inx(const Instruction& instruction, uint16_t pc);
-		void iny(const Instruction& instruction, uint16_t pc);
-		void asl(const Instruction& instruction, uint16_t pc);
-		void rol(const Instruction& instruction, uint16_t pc);
-		void lsr(const Instruction& instruction, uint16_t pc);
-		void ror(const Instruction& instruction, uint16_t pc);
-		void asl_a(const Instruction& instruction, uint16_t pc);
-		void rol_a(const Instruction& instruction, uint16_t pc);
-		void lsr_a(const Instruction& instruction, uint16_t pc);
-		void ror_a(const Instruction& instruction, uint16_t pc);
+		// Memory addressing
+		uint16_t ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const;
+		uint8_t ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress) const;
+		void WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress, uint8_t value);
 
+		// ALU instructions
+		void ora(const Instruction& instruction, uint16_t operandAddress);
+		void and$(const Instruction& instruction, uint16_t operandAddress);
+		void eor(const Instruction& instruction, uint16_t operandAddress);
+		void adc(const Instruction& instruction, uint16_t operandAddress);
+		void sbc(const Instruction& instruction, uint16_t operandAddress);
+		void cmp(const Instruction& instruction, uint16_t operandAddress);
+		void cpx(const Instruction& instruction, uint16_t operandAddress);
+		void cpy(const Instruction& instruction, uint16_t operandAddress);
+		void dec(const Instruction& instruction, uint16_t operandAddress);
+		void dex(const Instruction& instruction, uint16_t operandAddress);
+		void dey(const Instruction& instruction, uint16_t operandAddress);
+		void inc(const Instruction& instruction, uint16_t operandAddress);
+		void inx(const Instruction& instruction, uint16_t operandAddress);
+		void iny(const Instruction& instruction, uint16_t operandAddress);
+		void asl(const Instruction& instruction, uint16_t operandAddress);
+		void rol(const Instruction& instruction, uint16_t operandAddress);
+		void lsr(const Instruction& instruction, uint16_t operandAddress);
+		void ror(const Instruction& instruction, uint16_t operandAddress);
+		void asl_a(const Instruction& instruction, uint16_t operandAddress);
+		void rol_a(const Instruction& instruction, uint16_t operandAddress);
+		void lsr_a(const Instruction& instruction, uint16_t operandAddress);
+		void ror_a(const Instruction& instruction, uint16_t operandAddress);
 
+		// Jump/Flag instructions
+		void branch(const Instruction& instruction, uint16_t operandAddress);
+		void brk(const Instruction& instruction, uint16_t operandAddress);
+		void rti(const Instruction& instruction, uint16_t operandAddress);
+		void jsr(const Instruction& instruction, uint16_t operandAddress);
+		void rts(const Instruction& instruction, uint16_t operandAddress);
+		void jmp_abs(const Instruction& instruction, uint16_t operandAddress);
+		void jmp_ind(const Instruction& instruction, uint16_t operandAddress);
 	};
 }
 
