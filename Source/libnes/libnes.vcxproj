@@ -121,6 +121,8 @@
     <ClInclude Include="CPU\ALU.h" />
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\Registers.h" />
+    <ClInclude Include="Array.h" />
+    <ClInclude Include="Debugger\Debugger.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="Emulator.h" />
@@ -140,6 +142,9 @@
     <ClCompile Include="CPU\opcodes.cpp" />
     <ClCompile Include="Memory\MainMemory.cpp" />
     <ClCompile Include="Memory\MemoryBus.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Debugger\Debugger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

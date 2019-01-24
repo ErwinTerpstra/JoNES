@@ -38,3 +38,8 @@ void Emulator::Update(float time)
 	while (device.cpu->Time() < time)
 		device.cpu->ExecuteNextInstruction();
 }
+
+void Emulator::ExecuteNextInstruction()
+{
+	device.cpu->ExecuteNextInstruction();
+}

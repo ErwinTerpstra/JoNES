@@ -21,6 +21,7 @@ namespace libnes
 		void InsertCartridge(Cartridge* cartridge);
 
 		void Update(float time);
+		void ExecuteNextInstruction();
 	};
 }
 
