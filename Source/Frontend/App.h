@@ -11,7 +11,7 @@ namespace JoNES
 	class Window;
 	class Renderer;
 	class InterfaceController;
-
+	
 	class App
 	{
 	private:
@@ -20,10 +20,11 @@ namespace JoNES
 
 		Window* window;
 
-		libnes::Emulator* emulator;
-
 		Renderer* renderer;
 		InterfaceController* interfaceController;
+	
+	public:
+		libnes::Emulator* emulator;
 
 	public:
 		App();

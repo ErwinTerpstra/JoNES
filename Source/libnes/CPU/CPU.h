@@ -115,6 +115,33 @@ namespace libnes
 		void rts(const Instruction& instruction, uint16_t operandAddress);
 		void jmp_abs(const Instruction& instruction, uint16_t operandAddress);
 		void jmp_ind(const Instruction& instruction, uint16_t operandAddress);
+		void bit(const Instruction& instruction, uint16_t operandAddress);
+		void clc(const Instruction& instruction, uint16_t operandAddress);
+		void sec(const Instruction& instruction, uint16_t operandAddress);
+		void cld(const Instruction& instruction, uint16_t operandAddress);
+		void sed(const Instruction& instruction, uint16_t operandAddress);
+		void cli(const Instruction& instruction, uint16_t operandAddress);
+		void sei(const Instruction& instruction, uint16_t operandAddress);
+		void clv(const Instruction& instruction, uint16_t operandAddress);
+		void nop(const Instruction& instruction, uint16_t operandAddress);
+
+		// Move instructions
+		void lda(const Instruction& instruction, uint16_t operandAddress);
+		void sta(const Instruction& instruction, uint16_t operandAddress);
+		void ldx(const Instruction& instruction, uint16_t operandAddress);
+		void stx(const Instruction& instruction, uint16_t operandAddress);
+		void ldy(const Instruction& instruction, uint16_t operandAddress);
+		void sty(const Instruction& instruction, uint16_t operandAddress);
+		void tax(const Instruction& instruction, uint16_t operandAddress);
+		void txa(const Instruction& instruction, uint16_t operandAddress);
+		void tay(const Instruction& instruction, uint16_t operandAddress);
+		void tya(const Instruction& instruction, uint16_t operandAddress);
+		void tsx(const Instruction& instruction, uint16_t operandAddress);
+		void txs(const Instruction& instruction, uint16_t operandAddress);
+		void pla(const Instruction& instruction, uint16_t operandAddress);
+		void pha(const Instruction& instruction, uint16_t operandAddress);
+		void plp(const Instruction& instruction, uint16_t operandAddress);
+		void php(const Instruction& instruction, uint16_t operandAddress);
 	};
 }
 

@@ -5,6 +5,8 @@
 
 #include "File.h"
 
+#include "TestSuite/TestSuite.h"
+
 #include "Window.h"
 #include "Rendering/Renderer.h"
 #include "Interface/InterfaceController.h"
@@ -29,7 +31,7 @@ bool App::Init()
 
 	time = (float) glfwGetTime();
 
-	window = Window::Create(1280, 720, "App emulator");
+	window = Window::Create(1280, 720, "JoNES emulator");
 
 	if (!window)
 	{
@@ -134,7 +136,7 @@ void App::Render()
 
 void App::HandleInterface()
 {
-	ImGui::Begin("App debug");
+	ImGui::Begin("JoNES debug");
 	
 	static bool vsync = true;
 	if (ImGui::Checkbox("V-Sync", &vsync))

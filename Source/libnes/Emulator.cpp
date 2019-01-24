@@ -14,7 +14,7 @@ using namespace libnes;
 Emulator::Emulator()
 {
 	device.cpu = new CPU(&device);
-	device.mainMemory = new MemoryBus(*(new MainMemory(&device)));
+	device.mainMemory = new MemoryBus(new MainMemory(&device));
 }
 
 Emulator::~Emulator()

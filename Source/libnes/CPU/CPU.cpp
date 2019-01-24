@@ -290,7 +290,7 @@ void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
 	bool branchOnSet = READ_BIT(instruction.opcode, 5);
 
 	// TODO: Create a look-up table for this
-	switch (instruction.opcode >> 5)
+	switch ((instruction.opcode >> 5) & 0x03)
 	{
 	case 0x00:
 		flag = FLAG_NEGATIVE;
@@ -357,4 +357,143 @@ void CPU::jmp_abs(const Instruction& instruction, uint16_t operandAddress)
 void CPU::jmp_ind(const Instruction& instruction, uint16_t operandAddress)
 {
 	registers.pc = device->mainMemory->ReadU16(device->mainMemory->ReadU16(operandAddress));
+}
+
+void CPU::bit(const Instruction& instruction, uint16_t operandAddress)
+{
+	uint8_t value = ReadAddressed(instruction.addressingMode, operandAddress);
+
+	registers.SetOrClearFlag(FLAG_ZERO, (registers.a & value) == 0);
+	registers.SetOrClearFlag(FLAG_OVERFLOW, READ_BIT(value, 6));
+	registers.SetOrClearFlag(FLAG_NEGATIVE, READ_BIT(value, 7));
+}
+
+void CPU::clc(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.ClearFlag(FLAG_CARRY);
+}
+
+void CPU::sec(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.SetFlag(FLAG_CARRY);
+}
+
+void CPU::cld(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.ClearFlag(FLAG_DECIMAL_MODE);
+}
+
+void CPU::sed(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.SetFlag(FLAG_DECIMAL_MODE);
+}
+
+void CPU::cli(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.ClearFlag(FLAG_INTERRUPT_DISABLE);
+}
+
+void CPU::sei(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
+}
+
+void CPU::clv(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.ClearFlag(FLAG_OVERFLOW);
+}
+
+void CPU::nop(const Instruction& instruction, uint16_t operandAddress)
+{
+
+}
+
+// Move instructions
+void CPU::lda(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.a = ReadAddressed(instruction.addressingMode, operandAddress);
+	registers.SetZNFromResult(registers.a);
+}
+
+void CPU::sta(const Instruction& instruction, uint16_t operandAddress)
+{
+	WriteAddressed(instruction.addressingMode, operandAddress, registers.a);
+}
+
+void CPU::ldx(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.x = ReadAddressed(instruction.addressingMode, operandAddress);
+	registers.SetZNFromResult(registers.x);
+}
+
+void CPU::stx(const Instruction& instruction, uint16_t operandAddress)
+{
+	WriteAddressed(instruction.addressingMode, operandAddress, registers.x);
+}
+
+void CPU::ldy(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.y = ReadAddressed(instruction.addressingMode, operandAddress);
+	registers.SetZNFromResult(registers.y);
+}
+
+void CPU::sty(const Instruction& instruction, uint16_t operandAddress)
+{
+	WriteAddressed(instruction.addressingMode, operandAddress, registers.y);
+}
+
+void CPU::tax(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.x = registers.a;
+	registers.SetZNFromResult(registers.x);
+}
+
+void CPU::txa(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.a = registers.x;
+	registers.SetZNFromResult(registers.a);
+}
+
+void CPU::tay(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.y = registers.a;
+	registers.SetZNFromResult(registers.y);
+}
+
+void CPU::tya(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.a = registers.y;
+	registers.SetZNFromResult(registers.a);
+}
+
+void CPU::tsx(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.x = registers.s;
+	registers.SetZNFromResult(registers.x);
+}
+
+void CPU::txs(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.s = registers.x;
+}
+
+void CPU::pla(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.a = PopStackU8();
+	registers.SetZNFromResult(registers.a);
+}
+
+void CPU::pha(const Instruction& instruction, uint16_t operandAddress)
+{
+	PushStackU8(registers.a);
+}
+
+void CPU::plp(const Instruction& instruction, uint16_t operandAddress)
+{
+	registers.p = PopStackU8();
+}
+
+void CPU::php(const Instruction& instruction, uint16_t operandAddress)
+{
+	PushStackU8(registers.p);
 }

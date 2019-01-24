@@ -10,10 +10,16 @@ namespace libnes
 	class MemoryBus
 	{
 	private:
-		MemoryInterface& interface;
+		MemoryInterface* interface;
 
 	public:
-		MemoryBus(MemoryInterface& interface);
+		MemoryBus(MemoryInterface* interface);
+
+		template <class T>
+		void Chain()
+		{
+			interface = new T(interface);
+		}
 
 		uint8_t ReadU8(uint16_t address) const;
 		int8_t ReadS8(uint16_t address) const;
