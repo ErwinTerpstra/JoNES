@@ -78,6 +78,9 @@
     <ClInclude Include="TestSuite\TestMemoryInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Interface\DebuggerInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -120,6 +123,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TestSuite\TestSuite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interface\DebuggerInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

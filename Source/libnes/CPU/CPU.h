@@ -48,10 +48,10 @@ namespace libnes
 			void (CPU::*handler)(const Instruction& instruction, uint16_t operandAddress);
 		};
 
-	private:
 		static const Instruction INSTRUCTION_MAP[256];
 		static const uint8_t ADDRESSING_MODE_LENGTHS[LAST_ADDRESSING_MODE];
 
+	private:
 		Device* device;
 
 		uint64_t cycles;
@@ -65,6 +65,7 @@ namespace libnes
 		void Reset();
 
 		const Instruction& ExecuteNextInstruction();
+		const Instruction& DecodeInstruction(uint16_t address) const;
 
 		float Time() const
 		{

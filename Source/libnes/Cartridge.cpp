@@ -23,7 +23,7 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 	prgRom = new uint8_t[prgRomSize];
 	chrRom = new uint8_t[chrRomSize];
 
-	uint8_t* prgRomSrc = buffer + sizeof(header);
+	uint8_t* prgRomSrc = buffer + sizeof(CartridgeHeader_iNES);
 	uint8_t* chrRomSrc = prgRomSrc + prgRomSize;
 
 	memcpy(prgRom, prgRomSrc, prgRomSize);
@@ -32,10 +32,11 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 
 uint8_t Cartridge::Read(uint16_t address) const
 {
-	assert(address >= 0x6000);
-
 	if (address < 0x6000)
+	{
+		assert(false);
 		return 0; // Not connected
+	}
 
 	if (address < 0x8000)
 	{
@@ -44,7 +45,7 @@ uint8_t Cartridge::Read(uint16_t address) const
 		return 0;
 	}
 
-	return prgRom[address % prgRomSize];
+	return prgRom[(address - 0x8000) % prgRomSize];
 }
 
 void Cartridge::Write(uint16_t address, uint8_t value)

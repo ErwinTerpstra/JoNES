@@ -9,4 +9,6 @@
 
 #define NES_STACK_START					0x0100
 
+#define NES_INTERNAL_RAM_SIZE			0x0800
+
 #endif

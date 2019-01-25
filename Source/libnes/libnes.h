@@ -11,4 +11,6 @@
 #include "Memory/MainMemory.h"
 #include "Memory/MemoryInterface.h"
 
+#include "Debugger/Debugger.h"
+
 #endif

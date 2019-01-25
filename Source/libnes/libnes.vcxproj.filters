@@ -63,7 +63,7 @@
     <ClInclude Include="Debugger\Debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Array.h">
+    <ClInclude Include="Util\Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -86,8 +86,6 @@
     <ClCompile Include="CPU\opcodes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Debugger\Debugger.cpp" />
+    <ClCompile Include="Debugger\Debugger.cpp" />
   </ItemGroup>
 </Project>

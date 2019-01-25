@@ -2,12 +2,14 @@
 
 #include "Device.h"
 #include "Cartridge.h"
+#include "nes.h"
 
 using namespace libnes;
 
 MainMemory::MainMemory(Device* device) : device(device)
 {
-	ram = new uint8_t[0x0800];
+	ram = new uint8_t[NES_INTERNAL_RAM_SIZE];
+	memset(ram, 0, NES_INTERNAL_RAM_SIZE);
 }
 
 MainMemory::~MainMemory()
@@ -21,7 +23,7 @@ MainMemory::~MainMemory()
 uint8_t MainMemory::Read(uint16_t address) const
 {
 	if (address < 0x2000)
-		return ram[address % 0x800];
+		return ram[address % NES_INTERNAL_RAM_SIZE];
 	
 	if (address < 0x400)
 		return 0; // TODO: PPU registers

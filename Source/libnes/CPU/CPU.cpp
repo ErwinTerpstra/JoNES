@@ -28,14 +28,11 @@ void CPU::Reset()
 const CPU::Instruction& CPU::ExecuteNextInstruction()
 {
 	// Read the opcode the PC points at
-	uint8_t opcode = device->mainMemory->ReadU8(registers.pc);
-	
-	// Read the instruction description from the instruction map
-	const Instruction& instruction = INSTRUCTION_MAP[opcode];
+	const Instruction& instruction = DecodeInstruction(registers.pc);
 
 	if (instruction.handler == NULL)
 	{
-		printf("Missing instruction handler for opcode 0x%02X! at 0x%04X\n", opcode, registers.pc);
+		printf("Missing instruction handler for opcode 0x%02X! at 0x%04X\n", instruction.opcode, registers.pc);
 		debug::Halt();
 		return instruction;
 	}
@@ -53,6 +50,15 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	cycles += instruction.cycleCount;
 
 	return instruction;
+}
+
+const CPU::Instruction& CPU::DecodeInstruction(uint16_t address) const
+{
+	// Read the opcode
+	uint8_t opcode = device->mainMemory->ReadU8(address);
+
+	// Read the instruction description from the instruction map
+	return INSTRUCTION_MAP[opcode];
 }
 
 void CPU::PushStackU8(uint8_t value)
@@ -136,6 +142,7 @@ void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress,
 	device->mainMemory->WriteU8(address, value);
 }
 
+// ALU instructions
 void CPU::ora(const Instruction& instruction, uint16_t operandAddress)
 {
 	uint8_t operand = ReadAddressed(instruction.addressingMode, operandAddress);
@@ -284,13 +291,14 @@ void CPU::ror_a(const Instruction& instruction, uint16_t operandAddress)
 	registers.a = ALU::ror(registers, registers.a);
 }
 
+// Branch/flag instructions
 void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
 {
 	Flags flag;
 	bool branchOnSet = READ_BIT(instruction.opcode, 5);
 
 	// TODO: Create a look-up table for this
-	switch ((instruction.opcode >> 5) & 0x03)
+	switch ((instruction.opcode >> 6) & 0x03)
 	{
 	case 0x00:
 		flag = FLAG_NEGATIVE;

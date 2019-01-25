@@ -4,6 +4,7 @@
 namespace libnes
 {
 	class Emulator;
+	class Debugger;
 }
 
 namespace JoNES
@@ -11,6 +12,7 @@ namespace JoNES
 	class Window;
 	class Renderer;
 	class InterfaceController;
+	class DebuggerInterface;
 	
 	class App
 	{
@@ -22,9 +24,11 @@ namespace JoNES
 
 		Renderer* renderer;
 		InterfaceController* interfaceController;
+		DebuggerInterface* debuggerInterface;
 	
 	public:
 		libnes::Emulator* emulator;
+		libnes::Debugger* debugger;
 
 	public:
 		App();

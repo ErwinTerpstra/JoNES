@@ -2,7 +2,8 @@
 #define _DEBUGGER_H_
 
 #include "environment.h"
-#include "Array.h"
+
+#include "Util/Array.h"
 
 namespace libnes
 {
@@ -13,15 +14,27 @@ namespace libnes
 	private:
 		const uint8_t MAX_BREAKPOINTS = 64;
 
-		Emulator* emulator;
-
 		Array<uint16_t> breakpoints;
 
 		bool paused;
 
+		float previousTime;
+		float emulatorTime;
+
+	public:
+		Emulator * emulator;
+
 	public:
 		Debugger(Emulator* emulator);
-	}
-};
+		
+		void Pause();
+		void Resume();
+		void Step();
+
+		void Update(float time);
+
+		bool IsPaused() const { return paused; }
+	};
+}
 
 #endif

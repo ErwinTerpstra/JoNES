@@ -9,7 +9,9 @@
 
 #include "Window.h"
 #include "Rendering/Renderer.h"
+
 #include "Interface/InterfaceController.h"
+#include "Interface/DebuggerInterface.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -54,12 +56,21 @@ bool App::Init()
 	}
 
 	emulator = new Emulator();
+	debugger = new Debugger(emulator);
+
+	debuggerInterface = new DebuggerInterface(debugger);
 	
 	return true;
 }
 
 void App::Shutdown()
 {
+	if (debuggerInterface)
+		delete debuggerInterface;
+
+	if (debugger)
+		delete debugger;
+
 	if (emulator)
 		delete emulator;
 
@@ -122,9 +133,10 @@ void App::Update()
 	deltaTime = currentTime - time;
 	time = currentTime;
 
-	emulator->Update(time);
+	debugger->Update(time);
 
 	interfaceController->Update(deltaTime);
+	debuggerInterface->Update(deltaTime);
 
 	HandleInterface();
 }
@@ -136,7 +148,7 @@ void App::Render()
 
 void App::HandleInterface()
 {
-	ImGui::Begin("JoNES debug");
+	ImGui::Begin("Settings");
 	
 	static bool vsync = true;
 	if (ImGui::Checkbox("V-Sync", &vsync))

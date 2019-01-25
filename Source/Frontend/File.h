@@ -22,11 +22,11 @@ namespace JoNES
 			return readBytes;
 		}
 
-		bool WriteFile(const char* fileName, uint8_t* buffer, uint32_t bufferSize)
+		bool WriteFile(const char* fileName, uint8_t* buffer, uint32_t bufferSize, bool append = false)
 		{
 			// Open a file handle
 			FILE* handle;
-			errno_t error = fopen_s(&handle, fileName, "wb");
+			errno_t error = fopen_s(&handle, fileName, append ? "ab" : "wb");
 
 			if (error != 0)
 				return false;

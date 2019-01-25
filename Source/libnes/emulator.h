@@ -10,7 +10,7 @@ namespace libnes
 	class Emulator
 	{
 	public:
-		Device device;
+		Device* device;
 
 	public:
 		Emulator();

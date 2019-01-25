@@ -13,33 +13,38 @@ using namespace libnes;
 
 Emulator::Emulator()
 {
-	device.cpu = new CPU(&device);
-	device.mainMemory = new MemoryBus(new MainMemory(&device));
+	device = new Device();
+	device->cpu = new CPU(device);
+	device->mainMemory = new MemoryBus(new MainMemory(device));
 }
 
 Emulator::~Emulator()
 {
-
+	if (device)
+	{
+		delete device;
+		device = NULL;
+	}
 }
 
 void Emulator::Reset()
 {
-	device.cpu->Reset();
+	device->cpu->Reset();
 }
 
 void Emulator::InsertCartridge(Cartridge* cartridge)
 {
-	device.cartridge = cartridge;
+	device->cartridge = cartridge;
 	Reset();
 }
 
 void Emulator::Update(float time)
 {
-	while (device.cpu->Time() < time)
-		device.cpu->ExecuteNextInstruction();
+	while (device->cpu->Time() < time)
+		device->cpu->ExecuteNextInstruction();
 }
 
 void Emulator::ExecuteNextInstruction()
 {
-	device.cpu->ExecuteNextInstruction();
+	device->cpu->ExecuteNextInstruction();
 }
