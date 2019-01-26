@@ -2,3 +2,6 @@ Source/Frontend/Debug/
 .vs
 Source/libnes/Debug/
 Source/Debug/
+Source/libnes/Release/
+Source/Frontend/Release/
+Source/Release/

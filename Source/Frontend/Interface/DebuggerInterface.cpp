@@ -128,7 +128,7 @@ void DebuggerInterface::DrawDisassembly()
 
 	for (uint32_t i = 0; i < 10; ++i)
 	{
-		const CPU::Instruction& instruction = cpu->DecodeInstruction(pc);
+		const Instruction& instruction = cpu->DecodeInstruction(pc);
 		
 		{
 			ImGui::Text("0x%04X", pc);
@@ -136,7 +136,7 @@ void DebuggerInterface::DrawDisassembly()
 		}
 
 		{
-			for (uint32_t i = 0; i < CPU::ADDRESSING_MODE_LENGTHS[instruction.addressingMode]; ++i)
+			for (uint32_t i = 0; i < instruction.length(); ++i)
 			{
 				ImGui::Text("0x%02X", memory->ReadU8(pc + i));
 				ImGui::SameLine();
@@ -202,6 +202,6 @@ void DebuggerInterface::DrawDisassembly()
 			ImGui::NextColumn();
 		}
 
-		pc += CPU::ADDRESSING_MODE_LENGTHS[instruction.addressingMode];
+		pc += instruction.length();
 	}
 }

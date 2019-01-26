@@ -26,7 +26,7 @@ namespace JoNES
 		void Write(uint16_t address, uint8_t value)
 		{
 			if (address == 0x02 || address == 0x03)
-				Debug::Print("[Test]: 0x%4X: 0x%2X\n", address, value);
+				Debug::Print("[nestest]: 0x%4X: 0x%2X\n", address, value);
 
 			next->Write(address, value);
 		}

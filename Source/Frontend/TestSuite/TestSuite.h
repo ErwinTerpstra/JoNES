@@ -14,16 +14,16 @@ namespace JoNES
 	private:
 		libnes::Emulator* emulator;
 
-		const char* logFileName;
+		char* lineBuffer;
 
 	public:
-		TestSuite(libnes::Emulator* emulator, const char* logFileName);
+		TestSuite(libnes::Emulator* emulator);
+		~TestSuite();
 		
-		void Start();
-		void ExecuteNextInstruction();
+		void RunAutomated(const char* logFileName);
 
 	private:
-		void WriteCurrentStateToLog();
+		void WriteCurrentStateToLog(const char* logFileName);
 
 	};
 }

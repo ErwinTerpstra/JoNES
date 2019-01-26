@@ -5,7 +5,12 @@ namespace JoNES
 {
 	namespace File
 	{
-		int32_t ReadFile(const char* fileName, uint8_t* buffer, uint32_t bufferSize)
+		static bool DeleteFile(const char* fileName)
+		{
+			return remove(fileName) == 0;
+		}
+
+		static int32_t ReadFile(const char* fileName, uint8_t* buffer, uint32_t bufferSize)
 		{
 			// Open a file handle
 			FILE* handle;
@@ -22,7 +27,24 @@ namespace JoNES
 			return readBytes;
 		}
 
-		bool WriteFile(const char* fileName, uint8_t* buffer, uint32_t bufferSize, bool append = false)
+		static bool WriteFile(const char* fileName, const char* text, bool append = false)
+		{
+			// Open a file handle
+			FILE* handle;
+			errno_t error = fopen_s(&handle, fileName, append ? "a" : "w");
+
+			if (error != 0)
+				return false;
+
+			// Write the buffer to the file
+			int bytesWritten = fprintf(handle, "%s", text);
+
+			fclose(handle);
+
+			return true;
+		}
+
+		static bool WriteFile(const char* fileName, const uint8_t* buffer, uint32_t bufferSize, bool append = false)
 		{
 			// Open a file handle
 			FILE* handle;
@@ -39,7 +61,7 @@ namespace JoNES
 			return true;
 		}
 
-		int32_t GetFileSize(const char* fileName)
+		static int32_t GetFileSize(const char* fileName)
 		{
 			// Open a file handle
 			FILE* handle;

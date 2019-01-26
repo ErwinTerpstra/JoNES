@@ -16,7 +16,7 @@ CPU::CPU(Device* device) : device(device)
 
 void CPU::Reset()
 {
-	registers.p = 0x34;
+	registers.p = 0x24;	// NOTE: this should be 0x34, but Nintendulator uses 0x24 so this makes comparing logs easier
 	registers.a = 0x00;
 	registers.x = 0x00;
 	registers.y = 0x00;
@@ -25,7 +25,7 @@ void CPU::Reset()
 	registers.pc = device->mainMemory->ReadU16(NES_RESET_VECTOR);
 }
 
-const CPU::Instruction& CPU::ExecuteNextInstruction()
+const Instruction& CPU::ExecuteNextInstruction()
 {
 	// Read the opcode the PC points at
 	const Instruction& instruction = DecodeInstruction(registers.pc);
@@ -40,8 +40,7 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	uint16_t operandsAddress = registers.pc + 1;
 
 	// Increase the PC to point to the next instruction
-	uint8_t instructionLength = ADDRESSING_MODE_LENGTHS[instruction.addressingMode];
-	registers.pc += instructionLength;
+	registers.pc += instruction.length();
 
 	// Execute the instruction
 	(this->*instruction.handler)(instruction, operandsAddress);
@@ -52,7 +51,7 @@ const CPU::Instruction& CPU::ExecuteNextInstruction()
 	return instruction;
 }
 
-const CPU::Instruction& CPU::DecodeInstruction(uint16_t address) const
+const Instruction& CPU::DecodeInstruction(uint16_t address) const
 {
 	// Read the opcode
 	uint8_t opcode = device->mainMemory->ReadU8(address);

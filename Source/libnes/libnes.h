@@ -6,6 +6,8 @@
 #include "Cartridge.h"
 
 #include "CPU/CPU.h"
+#include "CPU/Instruction.h"
+#include "CPU/Registers.h"
 
 #include "Memory/MemoryBus.h"
 #include "Memory/MainMemory.h"

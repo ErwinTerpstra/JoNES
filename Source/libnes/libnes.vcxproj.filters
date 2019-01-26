@@ -66,6 +66,9 @@
     <ClInclude Include="Util\Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CPU\Instruction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Emulator.cpp">

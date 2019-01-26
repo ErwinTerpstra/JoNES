@@ -1,8 +1,9 @@
 #include "cpu.h"
+#include "Instruction.h"
 
 using namespace libnes;
 
-const uint8_t CPU::ADDRESSING_MODE_LENGTHS[] =
+const uint8_t Instruction::ADDRESSING_MODE_LENGTHS[] =
 {
 	1,		// Implied
 	2,		// Immediate
@@ -19,7 +20,7 @@ const uint8_t CPU::ADDRESSING_MODE_LENGTHS[] =
 	0,		// Invalid
 };
 
-const CPU::Instruction CPU::INSTRUCTION_MAP[] =
+const Instruction CPU::INSTRUCTION_MAP[] =
 {
 	{ 0x00, 7, ADDR_IMPL,			"BRK", &CPU::brk },
 	{ 0x01, 1, ADDR_IZPX,			"ORA", &CPU::ora },

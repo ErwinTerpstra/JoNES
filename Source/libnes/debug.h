@@ -4,8 +4,6 @@
 #include "environment.h"
 #include <stdio.h>
 
-#ifdef _DEBUG
-
 namespace libnes
 {
 	namespace debug
@@ -25,6 +23,7 @@ namespace libnes
 	}
 }
 
+#ifdef _DEBUG
 #define assert(x) ((void)(!(x) && libnes::debug::AssertHandler(#x, __FILE__, __LINE__)))
 #else
 #define assert(x)
