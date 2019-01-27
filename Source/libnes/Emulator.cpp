@@ -41,8 +41,13 @@ void Emulator::InsertCartridge(Cartridge* cartridge)
 
 void Emulator::Update(float time)
 {
-	while (device->cpu->Time() < time)
+	while (Time() < time)
 		ExecuteNextInstruction();
+}
+
+float Emulator::Time() const
+{
+	return device->cpu->Time();
 }
 
 const Instruction& Emulator::ExecuteNextInstruction()

@@ -2,23 +2,37 @@
 #define _MEMORY_BUS_H_
 
 #include "environment.h"
+#include "debug.h"
+
+#include "MemoryInterface.h"
 
 namespace libnes
 {
-	class MemoryInterface;
-
 	class MemoryBus
 	{
 	private:
 		MemoryInterface* interface;
+		MemoryInterface* originalInterface;
 
 	public:
 		MemoryBus(MemoryInterface* interface);
 
 		template <class T>
-		void Chain()
+		T InstallProxy()
 		{
+			assert(interface == originalInterface);
+
 			interface = new T(interface);
+			return interface;
+		}
+
+		void UninstallProxy()
+		{
+			assert(interface != originalInterface);
+			
+			delete interface;
+
+			interface = originalInterface;
 		}
 
 		uint8_t ReadU8(uint16_t address) const;

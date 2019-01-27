@@ -1,5 +1,5 @@
-#ifndef _DEBUG_H_
-#define _DEBUG_H_
+#ifndef _JONES_DEBUG_H_
+#define _JONES_DEBUG_H_
 
 namespace JoNES
 {
@@ -26,12 +26,6 @@ namespace JoNES
 			va_end(args);
 		}
 
-		static bool AssertHandler(const char* code, const char* file, const uint32_t line)
-		{
-			Print("Assert failed!\n%s at %s:%d\n", code, file, line);
-			return true;
-		}
-
 		static bool Halt()
 		{
 			__debugbreak();
@@ -43,13 +37,7 @@ namespace JoNES
 			__debugbreak();
 		}
 	};
-
-#ifdef _DEBUG
-#define assert(x) ((void)(!(x) && Debug::AssertHandler(#x, __FILE__, __LINE__) && Debug::Halt()))
-#else
-#define assert(x)
-#endif
-
+	
 }
 
 #endif

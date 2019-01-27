@@ -21,6 +21,9 @@ namespace JoNES
 	private:
 		void DrawRegisters();
 		void DrawDisassembly();
+		void DrawBreakpoints();
+
+		bool InputU16(const char* buttonLabel, char* buffer, uint16_t* input);
 	};
 }
 

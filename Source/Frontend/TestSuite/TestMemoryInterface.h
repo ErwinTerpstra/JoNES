@@ -18,6 +18,11 @@ namespace JoNES
 
 		}
 
+		~TestMemoryInterface()
+		{
+
+		}
+
 		uint8_t Read(uint16_t address) const
 		{
 			return next->Read(address);

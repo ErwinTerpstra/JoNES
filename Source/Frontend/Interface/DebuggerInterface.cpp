@@ -2,6 +2,8 @@
 
 #include "DebuggerInterface.h"
 
+#include "TestSuite/TestSuite.h"
+
 #include "libnes/libnes.h"
 #include "imgui/imgui.h"
 
@@ -45,14 +47,28 @@ void DebuggerInterface::Update(float deltaTime)
 		if (ImGui::Button("Pause"))
 			debugger->Pause();
 	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Reset"))
+		debugger->emulator->Reset();
+
+	if (ImGui::Button("Run nestest"))
+	{
+		TestSuite test(debugger->emulator);
+		test.RunAutomated("../../Logs/JoNES_nestest.log");
+	}
 	
 	ImGui::Separator();
 
-	DrawRegisters();
+	if (ImGui::CollapsingHeader("Registers"))
+		DrawRegisters();
 
-	ImGui::Separator();
-
-	DrawDisassembly();
+	if (ImGui::CollapsingHeader("Disassembly"))
+		DrawDisassembly();
+	
+	if (ImGui::CollapsingHeader("Breakpoints"))
+		DrawBreakpoints();
 
 	ImGui::End();
 }
@@ -66,6 +82,21 @@ void DebuggerInterface::DrawRegisters()
 
 	{
 		ImGui::Text("PC: 0x%04X", cpu->registers.pc);
+		
+		if (ImGui::BeginPopupContextItem("SetPC"))
+		{
+			static char pcBuffer[5];
+			uint16_t pc;
+
+			if (InputU16("Set", pcBuffer, &pc))
+			{
+				cpu->registers.pc = pc;
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::NextColumn();
 
 		ImGui::Text("S:  0x%02X", cpu->registers.s);
@@ -201,4 +232,51 @@ void DebuggerInterface::DrawDisassembly()
 
 		pc += instruction.length();
 	}
+
+	ImGui::Columns(1);
+}
+
+void DebuggerInterface::DrawBreakpoints()
+{
+	{
+		ImGui::BeginChild("breakpoints", ImVec2(0, 100), true);
+
+		for (uint32_t breakpointIdx = 0; breakpointIdx < debugger->breakpoints.Length(); )
+		{
+			ImGui::Text("$%04X", debugger->breakpoints[breakpointIdx]);
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Delete"))
+				debugger->breakpoints.RemoveIndex(breakpointIdx);
+			else
+				++breakpointIdx;
+		}
+
+		ImGui::EndChild();
+
+		static char breakpointBuffer[5];
+		uint16_t breakpointPC;
+
+		if (InputU16("Add", breakpointBuffer, &breakpointPC))
+		{
+			debugger->breakpoints.Add(breakpointPC);
+			
+			breakpointBuffer[0] = '\0';
+		}
+	}
+}
+
+bool DebuggerInterface::InputU16(const char* buttonLabel, char* buffer, uint16_t* input)
+{
+	ImGui::InputText("", buffer, 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+	ImGui::SameLine();
+
+	if (ImGui::Button(buttonLabel))
+	{
+		*input = (uint16_t)strtoul(buffer, NULL, 16);
+		return true;
+	}
+
+	return false;
 }

@@ -2,6 +2,7 @@
 #define _ENVIRONMENT_H_
 
 #include <stdint.h>
-#include <string.h>
+#include <assert.h>
+#include <cstring>
 
 #endif

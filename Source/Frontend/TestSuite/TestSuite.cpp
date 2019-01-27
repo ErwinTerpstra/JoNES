@@ -13,12 +13,13 @@ using namespace JoNES;
 TestSuite::TestSuite(Emulator* emulator) : emulator(emulator)
 {
 	// Install our memory interface
-	emulator->device->mainMemory->Chain<TestMemoryInterface>();
+	emulator->device->mainMemory->InstallProxy<TestMemoryInterface>();
 }
 
 TestSuite::~TestSuite()
 {
-
+	// Uninstall the memory interface
+	emulator->device->mainMemory->UninstallProxy();
 }
 
 void TestSuite::RunAutomated(const char* logFileName)
@@ -29,11 +30,12 @@ void TestSuite::RunAutomated(const char* logFileName)
 	char* bufferStart = new char[bufferSize];
 	char* buffer = bufferStart;
 
+	emulator->Reset();
 	emulator->device->cpu->registers.pc = 0xC000;
 
 	while (true)
 	{
-		buffer += WriteCurrentStateToLog(buffer, bufferSize);
+		buffer += WriteCurrentStateToLog(buffer, bufferSize, false);
 
 		const Instruction& instruction = emulator->ExecuteNextInstruction();
 
@@ -47,7 +49,7 @@ void TestSuite::RunAutomated(const char* logFileName)
 	File::WriteFile(logFileName, bufferStart);
 }
 
-uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize)
+uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bool withCycleCounts)
 {
 	CPU* cpu = emulator->device->cpu;
 	MemoryBus* memory = emulator->device->mainMemory;
@@ -134,17 +136,27 @@ uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize)
 		case ADDR_IZPY:
 		{
 			uint8_t operand = memory->ReadU8(pc + 1);
-			uint16_t address = memory->ReadU16_ZeroPage(operand);
-			uint8_t value = memory->ReadU8(address + registers.y);
-			buffer += sprintf_s(buffer, bufferSize, "($%02X),Y = %04X @ %04X = %02X", operand, address, address + registers.y, value);
+			uint16_t baseAddress = memory->ReadU16_ZeroPage(operand);
+			uint16_t address = baseAddress + registers.y;
+			uint8_t value = memory->ReadU8(address);
+			buffer += sprintf_s(buffer, bufferSize, "($%02X),Y = %04X @ %04X = %02X", operand, baseAddress, address, value);
 			break;
 		}
 
 		case ADDR_ABS:
 		{
 			uint16_t operand = memory->ReadU16(pc + 1);
-			uint8_t value = memory->ReadU8(operand);
-			buffer += sprintf_s(buffer, bufferSize, "$%04X = %02X", operand, value);
+
+			// Check if the instruction is a jump instruction
+			// Don't show the operand value for those
+			if (instruction.opcode != 0x20 && instruction.opcode != 0x4C)
+			{
+				uint8_t value = memory->ReadU8(operand);
+				buffer += sprintf_s(buffer, bufferSize, "$%04X = %02X", operand, value);
+			}
+			else
+				buffer += sprintf_s(buffer, bufferSize, "$%04X", operand);
+
 			break;
 		}
 
@@ -179,14 +191,19 @@ uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize)
 		buffer += sprintf_s(buffer, bufferSize, " ");
 
 	// Registers
-	buffer += sprintf_s(buffer, bufferSize, "A:%02X X:%02X Y:%02X P:%02X SP:%02X ", 
+	buffer += sprintf_s(buffer, bufferSize, "A:%02X X:%02X Y:%02X P:%02X SP:%02X", 
 					  registers.a, registers.x, registers.y, registers.p, registers.s);
 
-	// PPU
-	buffer += sprintf_s(buffer, bufferSize, "PPU:%3d,%3d ", 0, 0);
+	if (withCycleCounts)
+	{
+		buffer += sprintf_s(buffer, bufferSize, " ");
 
-	// Cycles
-	buffer += sprintf_s(buffer, bufferSize, "CYC:%llu", cpu->Cycles());
+		// PPU
+		buffer += sprintf_s(buffer, bufferSize, "PPU:%3d,%3d ", 0, 0);
+
+		// Cycles
+		buffer += sprintf_s(buffer, bufferSize, "CYC:%llu", cpu->Cycles());
+	}
 
 	// Newline
 	buffer += sprintf_s(buffer, bufferSize, "\n");

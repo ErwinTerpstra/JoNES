@@ -18,8 +18,9 @@ namespace libnes
 		~Emulator();
 
 		void Reset();
-
 		void InsertCartridge(Cartridge* cartridge);
+
+		float Time() const;
 
 		void Update(float time);
 		const Instruction& ExecuteNextInstruction();

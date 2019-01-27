@@ -6,7 +6,7 @@
 
 using namespace libnes;
 
-MemoryBus::MemoryBus(MemoryInterface* interface) : interface(interface)
+MemoryBus::MemoryBus(MemoryInterface* interface) : interface(interface), originalInterface(interface)
 {
 
 }

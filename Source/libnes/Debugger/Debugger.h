@@ -14,8 +14,6 @@ namespace libnes
 	private:
 		const uint8_t MAX_BREAKPOINTS = 64;
 
-		Array<uint16_t> breakpoints;
-
 		bool paused;
 
 		float previousTime;
@@ -23,6 +21,8 @@ namespace libnes
 
 	public:
 		Emulator * emulator;
+
+		Array<uint16_t> breakpoints;
 
 	public:
 		Debugger(Emulator* emulator);
