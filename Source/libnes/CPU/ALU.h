@@ -56,7 +56,8 @@ namespace libnes
 			uint8_t carry = registers.GetFlag(FLAG_CARRY);
 			uint8_t result = registers.a + operand + carry;
 
-			registers.SetOrClearFlag(FLAG_CARRY, READ_BIT(registers.a ^ operand ^ result, 7));
+
+			registers.SetOrClearFlag(FLAG_CARRY, READ_BIT(DETECT_CARRY(registers.a, operand, result), 7));
 			registers.SetOrClearFlag(FLAG_OVERFLOW, READ_BIT((registers.a ^ result) & (operand ^ result), 7));
 			registers.SetZNFromResult(result);
 

@@ -85,7 +85,7 @@ void DebuggerInterface::DrawRegisters()
 	}
 
 	// Flags
-	ImGui::Columns(4, NULL, false);
+	ImGui::Columns(3, NULL, false);
 	ImGui::Separator();
 
 	{
@@ -100,10 +100,7 @@ void DebuggerInterface::DrawRegisters()
 
 		ImGui::Text("D: %u", cpu->registers.GetFlag(FLAG_DECIMAL_MODE));
 		ImGui::NextColumn();
-
-		ImGui::Text("B: %u", cpu->registers.GetFlag(FLAG_BREAK));
-		ImGui::NextColumn();
-
+		
 		ImGui::Text("V: %u", cpu->registers.GetFlag(FLAG_OVERFLOW));
 		ImGui::NextColumn();
 
@@ -152,47 +149,47 @@ void DebuggerInterface::DrawDisassembly()
 			switch (instruction.addressingMode)
 			{
 				case ADDR_IMM:
-					ImGui::Text("#0x%02X", memory->ReadU8(pc + 1));
+					ImGui::Text("#$%02X", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_ZP:
-					ImGui::Text("0x%02X", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_ZPX:
-					ImGui::Text("0x%02X,X", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X,X", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_ZPY:
-					ImGui::Text("0x%02X,Y", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X,Y", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_IND:
-					ImGui::Text("(0x%04X)", memory->ReadU16(pc + 1));
+					ImGui::Text("($%04X)", memory->ReadU16(pc + 1));
 					break;
 
 				case ADDR_IZPX:
-					ImGui::Text("(0x%02X,X)", memory->ReadU8(pc + 1));
+					ImGui::Text("($%02X,X)", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_IZPY:
-					ImGui::Text("(0x%02X),Y", memory->ReadU8(pc + 1));
+					ImGui::Text("($%02X),Y", memory->ReadU8(pc + 1));
 					break;
 
 				case ADDR_ABS:
-					ImGui::Text("0x%04X", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X", memory->ReadU16(pc + 1));
 					break;
 
 				case ADDR_ABSX:
-					ImGui::Text("0x%04X,X", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X,X", memory->ReadU16(pc + 1));
 					break;
 
 				case ADDR_ABSY:
-					ImGui::Text("0x%04X,Y", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X,Y", memory->ReadU16(pc + 1));
 					break;
 
 				case ADDR_REL:
-					ImGui::Text("0x%02X", memory->ReadU8(pc + 1));
+					ImGui::Text("$%04X", pc + instruction.length() + memory->ReadS8(pc + 1));
 					break;
 
 				case ADDR_IMPL:

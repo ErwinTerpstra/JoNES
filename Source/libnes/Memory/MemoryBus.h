@@ -24,6 +24,8 @@ namespace libnes
 		uint8_t ReadU8(uint16_t address) const;
 		int8_t ReadS8(uint16_t address) const;
 		uint16_t ReadU16(uint16_t address) const;
+		uint16_t ReadU16_NoPageCross(uint16_t address) const;
+		uint16_t ReadU16_ZeroPage(uint8_t offset) const;
 		void Read(uint8_t* buffer, uint16_t address, uint16_t length) const;
 		
 		void WriteU8(uint16_t address, uint8_t value) const;

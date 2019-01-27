@@ -9,8 +9,8 @@ const uint8_t Instruction::ADDRESSING_MODE_LENGTHS[] =
 	2,		// Immediate
 	2,		// Relative
 	2,		// Zero page
-	1,		// Zero page, X indexed
-	1,		// Zero page, Y indexed
+	2,		// Zero page, X indexed
+	2,		// Zero page, Y indexed
 	3,		// Indirect
 	2,		// Indirect from zero page, X pre-indexed
 	2,		// Indirect from zero page, Y post-indexed
@@ -138,7 +138,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x6B, 1, ADDR_INVALID, "", NULL },
 	{ 0x6C, 5, ADDR_IND,			"JMP", &CPU::jmp_ind },
 	{ 0x6D, 1, ADDR_ABS,			"ADC", &CPU::adc },
-	{ 0x6E, 1, ADDR_ABSX,			"ROR", &CPU::ror },
+	{ 0x6E, 1, ADDR_ABS,			"ROR", &CPU::ror },
 	{ 0x6F, 1, ADDR_INVALID, "", NULL },
 
 	{ 0x70, 2, ADDR_REL,			"BVS", &CPU::branch },
@@ -166,7 +166,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x85, 1, ADDR_ZP,				"STA", &CPU::sta },
 	{ 0x86, 1, ADDR_ZP,				"STX", &CPU::stx },
 	{ 0x87, 1, ADDR_INVALID, "", NULL },
-	{ 0x88, 1, ADDR_IMPL,			"DEX", &CPU::dex },
+	{ 0x88, 1, ADDR_IMPL,			"DEY", &CPU::dey },
 	{ 0x89, 1, ADDR_INVALID, "", NULL },
 	{ 0x8A, 1, ADDR_IMPL,			"TXA", &CPU::txa },
 	{ 0x8B, 1, ADDR_INVALID, "", NULL },
@@ -180,8 +180,8 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x92, 1, ADDR_INVALID, "", NULL },
 	{ 0x93, 1, ADDR_INVALID, "", NULL },
 	{ 0x94, 1, ADDR_ZPX,			"STY", &CPU::sty },
-	{ 0x95, 1, ADDR_ZP,				"STA", &CPU::sta },
-	{ 0x96, 1, ADDR_ZP,				"STX", &CPU::stx },
+	{ 0x95, 1, ADDR_ZPX,			"STA", &CPU::sta },
+	{ 0x96, 1, ADDR_ZPY,			"STX", &CPU::stx },
 	{ 0x97, 1, ADDR_INVALID, "", NULL },
 	{ 0x98, 1, ADDR_IMPL,			"TYA", &CPU::tya },
 	{ 0x99, 1, ADDR_ABSY,			"STA", &CPU::sta },

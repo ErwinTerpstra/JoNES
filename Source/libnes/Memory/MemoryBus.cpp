@@ -27,6 +27,17 @@ uint16_t MemoryBus::ReadU16(uint16_t address) const
 	return ReadU8(address) | (ReadU8(address + 1) << 8);
 }
 
+uint16_t MemoryBus::ReadU16_ZeroPage(uint8_t offset) const
+{
+	return ReadU8(offset) | (ReadU8((offset + 1) & 0xFF) << 8);
+}
+
+uint16_t MemoryBus::ReadU16_NoPageCross(uint16_t address) const
+{
+	uint16_t msbAddress = (address & 0xFF00) | ((address + 1) & 0x00FF);
+	return ReadU8(address) | (ReadU8(msbAddress) << 8);
+}
+
 void MemoryBus::Read(uint8_t* buffer, uint16_t address, uint16_t length) const
 {
 	for (uint8_t offset = 0; offset < length; ++offset)

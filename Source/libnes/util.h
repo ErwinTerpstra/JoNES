@@ -15,4 +15,6 @@
 
 #define REINTERPRET(value, type) (*reinterpret_cast<const type*>(&value))
 
+#define DETECT_CARRY(a, b, r) ((a & b) | (a & ~r) | (b & ~r))
+
 #endif

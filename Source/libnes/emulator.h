@@ -6,6 +6,7 @@
 namespace libnes
 {
 	class Cartridge;
+	struct Instruction;
 
 	class Emulator
 	{
@@ -21,7 +22,7 @@ namespace libnes
 		void InsertCartridge(Cartridge* cartridge);
 
 		void Update(float time);
-		void ExecuteNextInstruction();
+		const Instruction& ExecuteNextInstruction();
 	};
 }
 

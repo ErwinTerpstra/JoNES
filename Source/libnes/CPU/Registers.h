@@ -12,7 +12,6 @@ namespace libnes
 		FLAG_ZERO				= 1 << 1,
 		FLAG_INTERRUPT_DISABLE	= 1 << 2,
 		FLAG_DECIMAL_MODE		= 1 << 3,
-		FLAG_BREAK				= 1 << 4,
 		FLAG_OVERFLOW			= 1 << 6,
 		FLAG_NEGATIVE			= 1 << 7,
 	};
@@ -26,7 +25,7 @@ namespace libnes
 		uint8_t s;
 
 		uint16_t pc;
-
+		
 		bool GetFlag(Flags flag)
 		{
 			return READ_MASK(p, flag);

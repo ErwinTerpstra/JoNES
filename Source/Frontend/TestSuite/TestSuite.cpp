@@ -14,33 +14,40 @@ TestSuite::TestSuite(Emulator* emulator) : emulator(emulator)
 {
 	// Install our memory interface
 	emulator->device->mainMemory->Chain<TestMemoryInterface>();
-	
-	lineBuffer = new char[128];
 }
 
 TestSuite::~TestSuite()
 {
-	if (lineBuffer)
-	{
-		delete[] lineBuffer;
-		lineBuffer = NULL;
-	}
+
 }
 
 void TestSuite::RunAutomated(const char* logFileName)
 {
 	File::DeleteFile(logFileName);
 
+	const uint32_t bufferSize = 1024 * 1024 * 8;
+	char* bufferStart = new char[bufferSize];
+	char* buffer = bufferStart;
+
 	emulator->device->cpu->registers.pc = 0xC000;
 
 	while (true)
 	{
-		WriteCurrentStateToLog(logFileName);
-		emulator->ExecuteNextInstruction();
+		buffer += WriteCurrentStateToLog(buffer, bufferSize);
+
+		const Instruction& instruction = emulator->ExecuteNextInstruction();
+
+		if (instruction.handler == NULL)
+		{
+			printf("[nestest]: Stopping automated test because of missing opcode implementation.\n");
+			break;
+		}
 	}
+
+	File::WriteFile(logFileName, bufferStart);
 }
 
-void TestSuite::WriteCurrentStateToLog(const char* logFileName)
+uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize)
 {
 	CPU* cpu = emulator->device->cpu;
 	MemoryBus* memory = emulator->device->mainMemory;
@@ -49,8 +56,7 @@ void TestSuite::WriteCurrentStateToLog(const char* logFileName)
 	uint16_t pc = registers.pc;
 	const Instruction& instruction = cpu->DecodeInstruction(pc);
 
-	char* buffer = lineBuffer;
-	const uint32_t bufferSize = 128;
+	char* bufferStart = buffer;
 
 	// PC
 	buffer += sprintf_s(buffer, bufferSize, "%04X  ", pc);
@@ -82,43 +88,86 @@ void TestSuite::WriteCurrentStateToLog(const char* logFileName)
 			break;
 
 		case ADDR_ZP:
-			buffer += sprintf_s(buffer, bufferSize, "$%02X", memory->ReadU8(pc + 1));
+		{
+			uint8_t operand = memory->ReadU8(pc + 1);
+			uint8_t value = memory->ReadU8(operand);
+			buffer += sprintf_s(buffer, bufferSize, "$%02X = %02X", operand, value);
 			break;
+		}
 
 		case ADDR_ZPX:
-			buffer += sprintf_s(buffer, bufferSize, "$%02X,X", memory->ReadU8(pc + 1));
+		{
+			uint8_t operand = memory->ReadU8(pc + 1);
+			uint8_t offset = operand + registers.x;
+			uint8_t value = memory->ReadU8(offset);
+			buffer += sprintf_s(buffer, bufferSize, "$%02X,X @ %02X = %02X", operand, offset, value);
 			break;
+		}
 
 		case ADDR_ZPY:
-			buffer += sprintf_s(buffer, bufferSize, "$%02X,Y", memory->ReadU8(pc + 1));
+		{
+			uint8_t operand = memory->ReadU8(pc + 1);
+			uint8_t offset = operand + registers.y;
+			uint8_t value = memory->ReadU8(offset);
+			buffer += sprintf_s(buffer, bufferSize, "$%02X,Y @ %02X = %02X", operand, offset, value);
 			break;
+		}
 
 		case ADDR_IND:
-			buffer += sprintf_s(buffer, bufferSize, "($%04X)", memory->ReadU16(pc + 1));
+		{
+			uint16_t operand = memory->ReadU16(pc + 1);
+			uint16_t value = memory->ReadU16_NoPageCross(operand);
+			buffer += sprintf_s(buffer, bufferSize, "($%04X) = %04X", operand, value);
 			break;
+		}
 
 		case ADDR_IZPX:
-			buffer += sprintf_s(buffer, bufferSize, "($%02X,X)", memory->ReadU8(pc + 1));
+		{
+			uint8_t operand = memory->ReadU8(pc + 1);
+			uint8_t offset = operand + registers.x;
+			uint16_t address = memory->ReadU16_ZeroPage(offset);
+			uint8_t value = memory->ReadU8(address);
+			buffer += sprintf_s(buffer, bufferSize, "($%02X,X) @ %02X = %04X = %02X", operand, offset, address, value);
 			break;
+		}
 
 		case ADDR_IZPY:
-			buffer += sprintf_s(buffer, bufferSize, "($%02X),Y", memory->ReadU8(pc + 1));
+		{
+			uint8_t operand = memory->ReadU8(pc + 1);
+			uint16_t address = memory->ReadU16_ZeroPage(operand);
+			uint8_t value = memory->ReadU8(address + registers.y);
+			buffer += sprintf_s(buffer, bufferSize, "($%02X),Y = %04X @ %04X = %02X", operand, address, address + registers.y, value);
 			break;
+		}
 
 		case ADDR_ABS:
-			buffer += sprintf_s(buffer, bufferSize, "$%04X", memory->ReadU16(pc + 1));
+		{
+			uint16_t operand = memory->ReadU16(pc + 1);
+			uint8_t value = memory->ReadU8(operand);
+			buffer += sprintf_s(buffer, bufferSize, "$%04X = %02X", operand, value);
 			break;
+		}
 
 		case ADDR_ABSX:
-			buffer += sprintf_s(buffer, bufferSize, "$%04X,X", memory->ReadU16(pc + 1));
+		{
+			uint16_t operand = memory->ReadU16(pc + 1);
+			uint16_t address = operand + registers.x;
+			uint8_t value = memory->ReadU8(operand);
+			buffer += sprintf_s(buffer, bufferSize, "$%04X,X @ %04X = %02X", operand, address, value);
 			break;
+		}
 
 		case ADDR_ABSY:
-			buffer += sprintf_s(buffer, bufferSize, "$%04X,Y", memory->ReadU16(pc + 1));
+		{
+			uint16_t operand = memory->ReadU16(pc + 1);
+			uint16_t address = operand + registers.y;
+			uint8_t value = memory->ReadU8(operand);
+			buffer += sprintf_s(buffer, bufferSize, "$%04X,Y @ %04X = %02X", operand, address, value);
 			break;
+		}
 
 		case ADDR_REL:
-			buffer += sprintf_s(buffer, bufferSize, "$%02X", memory->ReadU8(pc + 1));
+			buffer += sprintf_s(buffer, bufferSize, "$%04X", pc + instruction.length() + memory->ReadS8(pc + 1));
 			break;
 
 		case ADDR_IMPL:
@@ -142,5 +191,5 @@ void TestSuite::WriteCurrentStateToLog(const char* logFileName)
 	// Newline
 	buffer += sprintf_s(buffer, bufferSize, "\n");
 
-	File::WriteFile(logFileName, lineBuffer, true);
+	return buffer - bufferStart;
 }

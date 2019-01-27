@@ -32,8 +32,7 @@ const Instruction& CPU::ExecuteNextInstruction()
 
 	if (instruction.handler == NULL)
 	{
-		printf("Missing instruction handler for opcode 0x%02X! at 0x%04X\n", instruction.opcode, registers.pc);
-		debug::Halt();
+		printf("[CPU]: Missing instruction handler for opcode 0x%02X! at 0x%04X\n", instruction.opcode, registers.pc);
 		return instruction;
 	}
 
@@ -97,19 +96,19 @@ uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddr
 			return memory->ReadU8(operandAddress);
 
 		case ADDR_ZPX:
-			return memory->ReadU8(operandAddress) + registers.x;
+			return (memory->ReadU8(operandAddress) + registers.x) & 0xFF;
 
 		case ADDR_ZPY:
-			return memory->ReadU8(operandAddress) + registers.y;
+			return (memory->ReadU8(operandAddress) + registers.y) & 0xFF;
 
 		case ADDR_IND:
-			return memory->ReadU16(memory->ReadU16(operandAddress));
+			return memory->ReadU16_NoPageCross(memory->ReadU16(operandAddress));
 
 		case ADDR_IZPX:
-			return memory->ReadU16(memory->ReadU8(operandAddress) + registers.x);
+			return memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress) + registers.x);
 
 		case ADDR_IZPY:
-			return memory->ReadU16(memory->ReadU8(operandAddress)) + registers.y;
+			return memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress)) + registers.y;
 
 		case ADDR_ABS:
 			return memory->ReadU16(operandAddress);
@@ -330,9 +329,8 @@ void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
 void CPU::brk(const Instruction& instruction, uint16_t operandAddress)
 {
 	PushStackU16(registers.pc);
-	PushStackU8(registers.p);
+	PushStackU8(registers.p | 0x30); // BRK sets bits 4 & 5 when pushing
 
-	registers.SetFlag(FLAG_BREAK);
 	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
 
 	registers.pc = device->mainMemory->ReadU16(NES_INTERRUPT_VECTOR);
@@ -340,20 +338,23 @@ void CPU::brk(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::rti(const Instruction& instruction, uint16_t operandAddress)
 {
-	registers.p = PopStackU8();
+	// Clear bit 4 since it doesn't exist in P
+	// Set bit 5 because reasons
+	registers.p = SET_BIT(UNSET_BIT(PopStackU8(), 4), 5);
+
 	registers.pc = PopStackU16();
 }
 
 void CPU::jsr(const Instruction& instruction, uint16_t operandAddress)
 {
-	PushStackU16(registers.pc);
+	PushStackU16(registers.pc - 1);
 
 	registers.pc = device->mainMemory->ReadU16(operandAddress);
 }
 
 void CPU::rts(const Instruction& instruction, uint16_t operandAddress)
 {
-	registers.pc = PopStackU16();
+	registers.pc = PopStackU16() + 1;
 }
 
 void CPU::jmp_abs(const Instruction& instruction, uint16_t operandAddress)
@@ -363,7 +364,7 @@ void CPU::jmp_abs(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::jmp_ind(const Instruction& instruction, uint16_t operandAddress)
 {
-	registers.pc = device->mainMemory->ReadU16(device->mainMemory->ReadU16(operandAddress));
+	registers.pc = device->mainMemory->ReadU16_NoPageCross(device->mainMemory->ReadU16(operandAddress));
 }
 
 void CPU::bit(const Instruction& instruction, uint16_t operandAddress)
@@ -497,10 +498,13 @@ void CPU::pha(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::plp(const Instruction& instruction, uint16_t operandAddress)
 {
-	registers.p = PopStackU8();
+	// Clear bit 4 since it doesn't exist in P
+	// Set bit 5 because reasons
+	registers.p = SET_BIT(UNSET_BIT(PopStackU8(), 4), 5);
 }
 
 void CPU::php(const Instruction& instruction, uint16_t operandAddress)
 {
-	PushStackU8(registers.p);
+	// PHP sets bits 4 & 5 when pushing
+	PushStackU8(registers.p | 0x30);
 }

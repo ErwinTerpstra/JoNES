@@ -14,8 +14,6 @@ namespace JoNES
 	private:
 		libnes::Emulator* emulator;
 
-		char* lineBuffer;
-
 	public:
 		TestSuite(libnes::Emulator* emulator);
 		~TestSuite();
@@ -23,7 +21,7 @@ namespace JoNES
 		void RunAutomated(const char* logFileName);
 
 	private:
-		void WriteCurrentStateToLog(const char* logFileName);
+		uint32_t WriteCurrentStateToLog(char* buffer, uint32_t bufferSize);
 
 	};
 }

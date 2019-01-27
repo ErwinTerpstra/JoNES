@@ -3,6 +3,7 @@
 #include "Device.h"
 
 #include "CPU/CPU.h"
+#include "CPU/Instruction.h"
 #include "Memory/MemoryBus.h"
 #include "Memory/MainMemory.h"
 
@@ -44,7 +45,7 @@ void Emulator::Update(float time)
 		ExecuteNextInstruction();
 }
 
-void Emulator::ExecuteNextInstruction()
+const Instruction& Emulator::ExecuteNextInstruction()
 {
-	device->cpu->ExecuteNextInstruction();
+	return device->cpu->ExecuteNextInstruction();
 }
