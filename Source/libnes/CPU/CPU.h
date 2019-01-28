@@ -112,6 +112,10 @@ namespace libnes
 		void pha(const Instruction& instruction, uint16_t operandAddress);
 		void plp(const Instruction& instruction, uint16_t operandAddress);
 		void php(const Instruction& instruction, uint16_t operandAddress);
+
+		// Illegal opcodes
+		void sax(const Instruction& instruction, uint16_t operandAddress);
+		void lax(const Instruction& instruction, uint16_t operandAddress);
 	};
 }
 

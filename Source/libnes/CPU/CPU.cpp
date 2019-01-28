@@ -508,3 +508,17 @@ void CPU::php(const Instruction& instruction, uint16_t operandAddress)
 	// PHP sets bits 4 & 5 when pushing
 	PushStackU8(registers.p | 0x30);
 }
+
+// Illegal opcodes
+void CPU::sax(const Instruction& instruction, uint16_t operandAddress)
+{
+	WriteAddressed(instruction.addressingMode, operandAddress, registers.a & registers.x);
+}
+
+void CPU::lax(const Instruction& instruction, uint16_t operandAddress)
+{
+	uint8_t value = ReadAddressed(instruction.addressingMode, operandAddress);
+	registers.a = value;
+	registers.x = value;
+	registers.SetZNFromResult(value);
+}
