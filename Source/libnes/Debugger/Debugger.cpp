@@ -2,7 +2,8 @@
 
 #include "Emulator.h"
 
-#include "CPU/cpu.h"
+#include "CPU/CPU.h"
+#include "CPU/instruction.h"
 
 using namespace libnes;
 
@@ -13,6 +14,7 @@ Debugger::Debugger(Emulator* emulator) : emulator(emulator), breakpoints(32), pa
 
 void Debugger::Pause()
 {
+	emulatorTime = emulator->Time();
 	paused = true;
 }
 
@@ -23,14 +25,20 @@ void Debugger::Resume()
 
 void Debugger::Step()
 {
-	emulator->ExecuteNextInstruction();
+	const Instruction& instruction = emulator->ExecuteNextInstruction();
+
+	if (instruction.handler == NULL)
+		Pause();
 
 	uint16_t pc = emulator->device->cpu->registers.pc;
 
 	for (uint32_t breakpointIdx = 0; breakpointIdx < breakpoints.Length(); ++breakpointIdx)
 	{
 		if (breakpoints[breakpointIdx] == pc)
-			paused = true;
+		{
+			Pause();
+			break;
+		}
 	}
 }
 
@@ -41,7 +49,12 @@ void Debugger::Update(float time)
 		emulatorTime += time - previousTime;
 
 		while (emulatorTime > emulator->Time())
+		{
 			Step();
+
+			if (paused)
+				break;
+		}
 	}
 
 	previousTime = time;

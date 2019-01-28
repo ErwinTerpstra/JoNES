@@ -26,7 +26,7 @@ void TestSuite::RunAutomated(const char* logFileName)
 {
 	File::DeleteFile(logFileName);
 
-	const uint32_t bufferSize = 1024 * 1024 * 8;
+	uint32_t bufferSize = 1024 * 1024 * 8;
 	char* bufferStart = new char[bufferSize];
 	char* buffer = bufferStart;
 
@@ -35,7 +35,7 @@ void TestSuite::RunAutomated(const char* logFileName)
 
 	while (true)
 	{
-		buffer += WriteCurrentStateToLog(buffer, bufferSize, false);
+		buffer += WriteCurrentStateToLog(buffer, bufferSize - (buffer - bufferStart), false);
 
 		const Instruction& instruction = emulator->ExecuteNextInstruction();
 
@@ -164,7 +164,7 @@ uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bo
 		{
 			uint16_t operand = memory->ReadU16(pc + 1);
 			uint16_t address = operand + registers.x;
-			uint8_t value = memory->ReadU8(operand);
+			uint8_t value = memory->ReadU8(address);
 			buffer += sprintf_s(buffer, bufferSize, "$%04X,X @ %04X = %02X", operand, address, value);
 			break;
 		}
@@ -173,7 +173,7 @@ uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bo
 		{
 			uint16_t operand = memory->ReadU16(pc + 1);
 			uint16_t address = operand + registers.y;
-			uint8_t value = memory->ReadU8(operand);
+			uint8_t value = memory->ReadU8(address);
 			buffer += sprintf_s(buffer, bufferSize, "$%04X,Y @ %04X = %02X", operand, address, value);
 			break;
 		}
