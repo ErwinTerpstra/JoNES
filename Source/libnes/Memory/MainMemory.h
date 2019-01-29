@@ -19,7 +19,7 @@ namespace libnes
 		MainMemory(Device* device);
 		~MainMemory();
 
-		uint8_t Read(uint16_t address) const;
+		uint8_t Read(uint16_t address);
 		void Write(uint16_t address, uint8_t value);
 
 	};

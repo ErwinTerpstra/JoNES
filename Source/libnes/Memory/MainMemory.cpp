@@ -8,8 +8,8 @@ using namespace libnes;
 
 MainMemory::MainMemory(Device* device) : device(device)
 {
-	ram = new uint8_t[NES_INTERNAL_RAM_SIZE];
-	memset(ram, 0, NES_INTERNAL_RAM_SIZE);
+	ram = new uint8_t[NES_CPU_RAM_SIZE];
+	memset(ram, 0, NES_CPU_RAM_SIZE);
 }
 
 MainMemory::~MainMemory()
@@ -20,10 +20,10 @@ MainMemory::~MainMemory()
 	ram = NULL;
 }
 
-uint8_t MainMemory::Read(uint16_t address) const
+uint8_t MainMemory::Read(uint16_t address)
 {
 	if (address < 0x2000)
-		return ram[address % NES_INTERNAL_RAM_SIZE];
+		return ram[address % NES_CPU_RAM_SIZE];
 	
 	if (address < 0x400)
 		return 0; // TODO: PPU registers

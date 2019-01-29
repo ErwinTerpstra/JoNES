@@ -36,9 +36,6 @@
     <ClInclude Include="Memory\MemoryInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Memory\MainMemory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,15 +66,21 @@
     <ClInclude Include="CPU\Instruction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PPU\PPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PPU\VideoMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\MainMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Emulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Cartridge.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Memory\MainMemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Memory\MemoryBus.cpp">
@@ -90,5 +93,14 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Debugger\Debugger.cpp" />
+    <ClCompile Include="Memory\MainMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PPU\PPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PPU\VideoMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

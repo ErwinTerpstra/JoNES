@@ -32,11 +32,7 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 
 uint8_t Cartridge::Read(uint16_t address) const
 {
-	if (address < 0x6000)
-	{
-		assert(false);
-		return 0; // Not connected
-	}
+	assert(address >= 0x6000);
 
 	if (address < 0x8000)
 	{

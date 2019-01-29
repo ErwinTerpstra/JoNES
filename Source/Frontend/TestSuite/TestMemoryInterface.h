@@ -23,7 +23,7 @@ namespace JoNES
 
 		}
 
-		uint8_t Read(uint16_t address) const
+		uint8_t Read(uint16_t address)
 		{
 			return next->Read(address);
 		}

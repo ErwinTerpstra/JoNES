@@ -125,6 +125,8 @@
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\Instruction.h" />
     <ClInclude Include="CPU\Registers.h" />
+    <ClInclude Include="PPU\PPU.h" />
+    <ClInclude Include="PPU\VideoMemory.h" />
     <ClInclude Include="Util\Array.h" />
     <ClInclude Include="Debugger\Debugger.h" />
     <ClInclude Include="util.h" />
@@ -146,6 +148,8 @@
     <ClCompile Include="CPU\opcodes.cpp" />
     <ClCompile Include="Memory\MainMemory.cpp" />
     <ClCompile Include="Memory\MemoryBus.cpp" />
+    <ClCompile Include="PPU\PPU.cpp" />
+    <ClCompile Include="PPU\VideoMemory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debugger\Debugger.cpp" />
