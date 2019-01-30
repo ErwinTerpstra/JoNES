@@ -2,7 +2,9 @@
 #define _LIB_NES_H_
 
 #include "nes.h"
+
 #include "Emulator.h"
+#include "Device.h"
 #include "Cartridge.h"
 
 #include "CPU/CPU.h"

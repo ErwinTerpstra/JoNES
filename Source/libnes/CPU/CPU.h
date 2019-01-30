@@ -30,15 +30,15 @@ namespace libnes
 
 		const Instruction& ExecuteNextInstruction();
 		const Instruction& DecodeInstruction(uint16_t address) const;
-
-		float Time() const
-		{
-			return cycles / (float) NES_NTSC_CPU_CLOCK_FREQUENCY;
-		}
-
+		
 		uint64_t Cycles() const
 		{
 			return cycles;
+		}
+
+		uint64_t MasterClockCycles() const
+		{
+			return cycles * NES_NTSC_CPU_CLOCK_DIVIDER;
 		}
 
 	private:

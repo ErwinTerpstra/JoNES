@@ -5,11 +5,15 @@
 
 namespace libnes
 {
+	struct Device;
+
 	class VideoMemory : public MemoryInterface
 	{
+	private:
+		Device* device;
 
 	public:
-		VideoMemory();
+		VideoMemory(Device* device);
 
 		uint8_t Read(uint16_t address);
 		void Write(uint16_t address, uint8_t value);

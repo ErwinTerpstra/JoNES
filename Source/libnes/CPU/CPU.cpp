@@ -499,7 +499,7 @@ void CPU::pha(const Instruction& instruction, uint16_t operandAddress)
 void CPU::plp(const Instruction& instruction, uint16_t operandAddress)
 {
 	// Clear bit 4 since it doesn't exist in P
-	// Set bit 5 because reasons
+	// Set bit 5 because Nintendulator does so
 	registers.p = SET_BIT(UNSET_BIT(PopStackU8(), 4), 5);
 }
 
