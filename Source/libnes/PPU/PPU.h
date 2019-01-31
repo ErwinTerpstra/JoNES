@@ -15,7 +15,7 @@ namespace libnes
 	};
 
 	struct Device;
-
+	
 	class PPU
 	{
 	private:
@@ -25,6 +25,8 @@ namespace libnes
 
 		uint16_t scanline;
 
+		uint8_t status;
+
 	public:
 		PPU(Device* device);
 
@@ -32,10 +34,16 @@ namespace libnes
 
 		void Tick();
 
+		uint8_t ReadRegister(uint16_t address);
+		void WriteRegister(uint16_t address, uint8_t value);
+
 		uint64_t MasterClockCycles() const
 		{
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;
 		}
+
+	private:
+		void DrawScanline();
 	};
 }
 

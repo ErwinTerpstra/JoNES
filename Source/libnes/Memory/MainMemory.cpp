@@ -1,8 +1,10 @@
 #include "MainMemory.h"
 
+#include "nes.h"
+
 #include "Device.h"
 #include "Cartridge.h"
-#include "nes.h"
+#include "PPU/PPU.h"
 
 using namespace libnes;
 
@@ -25,8 +27,8 @@ uint8_t MainMemory::Read(uint16_t address)
 	if (address < 0x2000)
 		return ram[address % NES_CPU_RAM_SIZE];
 	
-	if (address < 0x400)
-		return 0; // TODO: PPU registers
+	if (address < 0x4000)
+		return device->ppu->ReadRegister(address);
 
 	if (address < 0x4020)
 		return 0; // TODO: APU and IO registers
@@ -42,7 +44,7 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 	if (address < 0x2000)
 		ram[address % 0x800] = value;
 
-	if (address < 0x400)
+	if (address < 0x4000)
 		return; // TODO: PPU registers
 
 	if (address < 0x4020)
