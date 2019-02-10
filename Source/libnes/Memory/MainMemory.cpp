@@ -43,10 +43,16 @@ uint8_t MainMemory::Read(uint16_t address)
 void MainMemory::Write(uint16_t address, uint8_t value)
 {
 	if (address < 0x2000)
+	{
 		ram[address % 0x800] = value;
-
+		return;
+	}
+	
 	if (address < 0x4000)
-		return; // TODO: PPU registers
+	{
+		device->ppu->WriteRegister(address, value);
+		return;
+	}
 
 	if (address < 0x4020)
 	{
@@ -54,11 +60,15 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 		{
 			device->ppu->PerformOAMDMA(value);
 			device->cpu->WaitForOAMDMA();
+			return;
 		}
 
 		return; // TODO: APU and IO registers
 	}
 
 	if (device->cartridge != NULL)
-		return device->cartridge->Write(address, value);
+	{
+		device->cartridge->Write(address, value);
+		return;
+	}
 }

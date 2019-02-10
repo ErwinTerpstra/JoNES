@@ -16,7 +16,7 @@
 // CPU addresses
 #define NES_NMI_VECTOR					0xFFFA
 #define NES_RESET_VECTOR				0xFFFC
-#define NES_INTERRUPT_VECTOR			0xFFFE
+#define NES_IRQ_VECTOR					0xFFFE
 
 #define NES_STACK_START					0x0100
 

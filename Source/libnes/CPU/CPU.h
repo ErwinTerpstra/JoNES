@@ -20,6 +20,9 @@ namespace libnes
 
 		uint64_t cycles;
 
+		bool irq;
+		bool nmi;
+
 	public:
 		Registers registers;
 
@@ -30,7 +33,10 @@ namespace libnes
 
 		const Instruction& ExecuteNextInstruction();
 		const Instruction& DecodeInstruction(uint16_t address) const;
-		
+
+		void SetIRQ(bool state);
+		void TriggerNMI();
+
 		uint64_t Cycles() const
 		{
 			return cycles;
@@ -50,6 +56,11 @@ namespace libnes
 		}
 
 	private:
+		void CheckInterrupts();
+
+		void ServiceIRQ();
+		void ServiceNMI();
+
 		// Stack management
 		void PushStackU8(uint8_t value);
 		void PushStackU16(uint16_t value);

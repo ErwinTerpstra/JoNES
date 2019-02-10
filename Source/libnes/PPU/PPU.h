@@ -35,6 +35,8 @@ namespace libnes
 		uint16_t addressRegister;
 		bool writeLSB;
 
+		bool nmiState;
+
 	public:
 		PPU(Device* device);
 		~PPU();

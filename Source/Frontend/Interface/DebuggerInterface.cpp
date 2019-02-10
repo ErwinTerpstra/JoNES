@@ -51,7 +51,7 @@ void DebuggerInterface::Update(float deltaTime)
 	ImGui::SameLine();
 
 	if (ImGui::Button("Reset"))
-		debugger->emulator->Reset();
+		debugger->Reset();
 
 	if (ImGui::Button("Run nestest"))
 	{

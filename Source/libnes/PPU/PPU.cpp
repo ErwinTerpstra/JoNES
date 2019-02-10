@@ -1,6 +1,7 @@
 #include "PPU.h"
 
 #include "Device.h"
+#include "CPU/CPU.h"
 #include "Memory/MemoryBus.h"
 
 #include "util.h"
@@ -36,6 +37,8 @@ void PPU::Reset()
 	scrollY = 0;
 	addressRegister = 0;
 	writeLSB = false;
+
+	nmiState = false;
 }
 
 void PPU::Tick()
@@ -51,8 +54,7 @@ void PPU::Tick()
 
 		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
 	}
-
-
+	
 	// Handle VBlank
 	if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE && localCycle == 1)
 	{
@@ -66,7 +68,12 @@ void PPU::Tick()
 		statusRegister = 0;
 	}
 
+	// Handle NMI
+	bool nmiActive = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_NMI_ENABLE) && READ_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+	if (nmiActive && !nmiState)
+		device->cpu->TriggerNMI();
 
+	nmiState = nmiActive;
 }
 
 uint8_t PPU::ReadRegister(uint16_t address)

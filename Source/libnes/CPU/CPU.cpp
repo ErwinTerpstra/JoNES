@@ -47,6 +47,8 @@ const Instruction& CPU::ExecuteNextInstruction()
 	// Increase the clock cycle count
 	cycles += instruction.cycleCount;
 
+	CheckInterrupts();
+
 	return instruction;
 }
 
@@ -57,6 +59,48 @@ const Instruction& CPU::DecodeInstruction(uint16_t address) const
 
 	// Read the instruction description from the instruction map
 	return INSTRUCTION_MAP[opcode];
+}
+
+void CPU::SetIRQ(bool state)
+{
+	irq = state;
+}
+
+void CPU::TriggerNMI()
+{
+	nmi = true;
+}
+
+void CPU::CheckInterrupts()
+{
+	if (!registers.GetFlag(FLAG_INTERRUPT_DISABLE) && irq)
+		ServiceIRQ();
+
+	if (nmi)
+	{
+		ServiceNMI();
+		nmi = false;
+	}
+}
+
+void CPU::ServiceIRQ()
+{
+	PushStackU16(registers.pc);
+	PushStackU8(registers.p | 0x20); // IRQ sets bit 5 when pushing
+
+	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
+
+	registers.pc = device->mainMemory->ReadU16(NES_IRQ_VECTOR);
+}
+
+void CPU::ServiceNMI()
+{
+	PushStackU16(registers.pc);
+	PushStackU8(registers.p | 0x20); // IRQ sets bit 5 when pushing
+
+	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
+
+	registers.pc = device->mainMemory->ReadU16(NES_NMI_VECTOR);
 }
 
 void CPU::PushStackU8(uint8_t value)
@@ -333,7 +377,7 @@ void CPU::brk(const Instruction& instruction, uint16_t operandAddress)
 
 	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
 
-	registers.pc = device->mainMemory->ReadU16(NES_INTERRUPT_VECTOR);
+	registers.pc = device->mainMemory->ReadU16(NES_IRQ_VECTOR);
 }
 
 void CPU::rti(const Instruction& instruction, uint16_t operandAddress)

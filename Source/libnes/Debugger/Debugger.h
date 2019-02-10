@@ -30,6 +30,7 @@ namespace libnes
 		void Pause();
 		void Resume();
 		void Step();
+		void Reset();
 
 		void Update(float time);
 
