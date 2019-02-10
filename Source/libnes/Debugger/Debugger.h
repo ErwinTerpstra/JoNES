@@ -3,7 +3,7 @@
 
 #include "environment.h"
 
-#include "Util/Array.h"
+#include "Util/Vector.h"
 
 namespace libnes
 {
@@ -22,7 +22,7 @@ namespace libnes
 	public:
 		Emulator * emulator;
 
-		Array<uint16_t> breakpoints;
+		Vector<uint16_t> breakpoints;
 
 	public:
 		Debugger(Emulator* emulator);

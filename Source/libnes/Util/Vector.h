@@ -1,12 +1,12 @@
-#ifndef _ARRAY_H_
-#define _ARRAY_H_
+#ifndef _VECTOR_H_
+#define _VECTOR_H_
 
 #include "environment.h"
 
 namespace libnes
 {
 	template <typename T>
-	class Array
+	class Vector
 	{
 	private:
 		T * data;
@@ -14,7 +14,7 @@ namespace libnes
 		uint32_t capacity;
 
 	public:
-		Array(uint32_t capacity) : length(0), capacity(capacity)
+		Vector(uint32_t capacity) : length(0), capacity(capacity)
 		{
 			data = new T[capacity];
 		}

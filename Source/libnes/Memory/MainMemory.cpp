@@ -4,6 +4,7 @@
 
 #include "Device.h"
 #include "Cartridge.h"
+#include "CPU/CPU.h"
 #include "PPU/PPU.h"
 
 using namespace libnes;
@@ -48,7 +49,15 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 		return; // TODO: PPU registers
 
 	if (address < 0x4020)
+	{
+		if (address == 0x4014)
+		{
+			device->ppu->PerformOAMDMA(value);
+			device->cpu->WaitForOAMDMA();
+		}
+
 		return; // TODO: APU and IO registers
+	}
 
 	if (device->cartridge != NULL)
 		return device->cartridge->Write(address, value);

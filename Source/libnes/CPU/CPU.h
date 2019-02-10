@@ -41,6 +41,14 @@ namespace libnes
 			return cycles * NES_NTSC_CPU_CLOCK_DIVIDER;
 		}
 
+		void WaitForOAMDMA()
+		{
+			if (cycles % 2 == 0)
+				++cycles;
+
+			cycles += 513;
+		}
+
 	private:
 		// Stack management
 		void PushStackU8(uint8_t value);

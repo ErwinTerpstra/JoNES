@@ -21,14 +21,23 @@ namespace libnes
 	private:
 		Device* device;
 
-		uint64_t cycles;
+		uint8_t* oam;
 
+		uint64_t cycles;
 		uint16_t scanline;
 
-		uint8_t status;
+		uint8_t statusRegister;
+		uint8_t controlBits;
+		uint8_t maskBits;
+		uint8_t oamAddress;
+		uint8_t scrollX;
+		uint8_t scrollY;
+		uint16_t addressRegister;
+		bool writeLSB;
 
 	public:
 		PPU(Device* device);
+		~PPU();
 
 		void Reset();
 
@@ -37,12 +46,15 @@ namespace libnes
 		uint8_t ReadRegister(uint16_t address);
 		void WriteRegister(uint16_t address, uint8_t value);
 
+		void PerformOAMDMA(uint8_t addressMSB);
+
 		uint64_t MasterClockCycles() const
 		{
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;
 		}
-
 	private:
+
+		void IncrementAddress();
 		void DrawScanline();
 	};
 }

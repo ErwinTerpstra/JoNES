@@ -127,7 +127,7 @@
     <ClInclude Include="CPU\Registers.h" />
     <ClInclude Include="PPU\PPU.h" />
     <ClInclude Include="PPU\VideoMemory.h" />
-    <ClInclude Include="Util\Array.h" />
+    <ClInclude Include="Util\Vector.h" />
     <ClInclude Include="Debugger\Debugger.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="debug.h" />
