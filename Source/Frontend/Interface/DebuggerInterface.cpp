@@ -121,7 +121,7 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 		ImGui::Text("Pattern tables:");
 
 		const float patternTableScale = 2;
-		ImGui::Image(patternTableLeft, ImVec2(patternTableLeft->Width() * patternTableScale, patternTableRight->Height() * patternTableScale));
+		ImGui::Image(patternTableLeft, ImVec2(patternTableLeft->Width() * patternTableScale, patternTableLeft->Height() * patternTableScale));
 		ImGui::SameLine();
 		ImGui::Image(patternTableRight, ImVec2(patternTableRight->Width() * patternTableScale, patternTableRight->Height() * patternTableScale));
 	}

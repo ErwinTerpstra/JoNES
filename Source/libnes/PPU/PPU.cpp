@@ -191,9 +191,9 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 {
 	for (uint8_t row = 0; row < NES_PPU_PATTERN_TABLE_TILES_PER_ROW; ++row)
 	{
-		for (uint8_t column = 0; column < NES_PPU_PATTERN_TABLE_TILES_PER_COLUMN; ++column)
+		for (uint8_t y = 0; y < NES_PPU_TILE_SIZE; ++y)
 		{
-			for (uint8_t y = 0; y < NES_PPU_TILE_SIZE; ++y)
+			for (uint8_t column = 0; column < NES_PPU_PATTERN_TABLE_TILES_PER_COLUMN; ++column)
 			{
 				DecodeTileRow(address, column, row, y, buffer);
 				buffer += NES_PPU_TILE_SIZE;
@@ -211,5 +211,5 @@ void PPU::DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y
 	uint8_t upperPlane = device->videoMemory->ReadU8(upperPlaneAddress);
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
-		buffer[x] = (READ_BIT(upperPlane, x) << 1) | READ_BIT(lowerPlane, x);
+		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
 }
