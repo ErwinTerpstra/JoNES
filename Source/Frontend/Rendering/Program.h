@@ -6,6 +6,7 @@
 namespace JoNES
 {
 	class Shader;
+	class Texture;
 
 	class Program
 	{
@@ -26,7 +27,7 @@ namespace JoNES
 		void Link();
 		void Bind() const;
 
-		void BindTexture(std::string uniformName, GLenum slot, GLuint texture);
+		void BindTexture(std::string uniformName, GLenum slot, Texture* texture);
 		
 		void SetVector3(const std::string& uniformName, const float* v);
 		void SetVector4(const std::string& uniformName, const float* v);

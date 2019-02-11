@@ -8,6 +8,14 @@
 
 using namespace libnes;
 
+uint8_t NES_2C02_PALETTE_COLORS[] =
+{
+	84, 84, 84, 0, 30, 116, 8, 16, 144, 48, 0, 136, 68, 0, 100, 92, 0, 48, 84, 4, 0, 60, 24, 0, 32, 42, 0, 8, 58, 0, 0, 64, 0, 0, 60, 0, 0, 50, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	152, 150, 152, 8, 76, 196, 48, 50, 236, 92, 30, 228, 136, 20, 176, 160, 20, 100, 152, 34, 32, 120, 60, 0, 84, 90, 0, 40, 114, 0, 8, 124, 0, 0, 118, 40, 0, 102, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	236, 238, 236, 76, 154, 236, 120, 124, 236, 176, 98, 236, 228, 84, 236, 236, 88, 180, 236, 106, 100, 212, 136, 32, 160, 170, 0, 116, 196, 0, 76, 208, 32, 56, 204, 108, 56, 180, 204, 60, 60, 60, 0, 0, 0, 0, 0, 0,
+	236, 238, 236, 168, 204, 236, 188, 188, 236, 212, 178, 236, 236, 174, 236, 236, 174, 212, 236, 180, 176, 228, 196, 144, 204, 210, 120, 180, 222, 120, 168, 226, 144, 152, 226, 180, 160, 214, 228, 160, 162, 160, 0, 0, 0, 0, 0, 0,
+};
+
 PPU::PPU(Device* device) : device(device)
 {
 	oam = new uint8_t[NES_PPU_OAM_SIZE];
@@ -15,11 +23,7 @@ PPU::PPU(Device* device) : device(device)
 
 PPU::~PPU()
 {
-	if (oam)
-	{
-		delete[] oam;
-		oam = NULL;
-	}
+	SAFE_DELETE_ARRAY(oam);
 }
 
 
@@ -162,13 +166,50 @@ void PPU::PerformOAMDMA(uint8_t addressMSB)
 
 void PPU::IncrementAddress()
 {
+	// Read the increment mode bit to check if we should increment by 32 (one row) or 1 (one column)
 	if (READ_BIT(controlBits, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
 		addressRegister += 32;
 	else
 		addressRegister += 1;
+
+	addressRegister &= 0x3FFF;
 }
 
 void PPU::DrawScanline()
 {
 
+}
+
+void PPU::DecodeColor(uint8_t color, uint8_t* buffer) const
+{
+	buffer[0] = NES_2C02_PALETTE_COLORS[color * 3 + 0];
+	buffer[1] = NES_2C02_PALETTE_COLORS[color * 3 + 1];
+	buffer[2] = NES_2C02_PALETTE_COLORS[color * 3 + 2];
+}
+
+void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
+{
+	for (uint8_t row = 0; row < NES_PPU_PATTERN_TABLE_TILES_PER_ROW; ++row)
+	{
+		for (uint8_t column = 0; column < NES_PPU_PATTERN_TABLE_TILES_PER_COLUMN; ++column)
+		{
+			for (uint8_t y = 0; y < NES_PPU_TILE_SIZE; ++y)
+			{
+				DecodeTileRow(address, column, row, y, buffer);
+				buffer += NES_PPU_TILE_SIZE;
+			}
+		}
+	}
+}
+
+void PPU::DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
+{
+	uint16_t lowerPlaneAddress = (address & 0x1000) | (row << 8) | (column << 4) | (y & 0x07);
+	uint16_t upperPlaneAddress = lowerPlaneAddress | 0x08;
+
+	uint8_t lowerPlane = device->videoMemory->ReadU8(lowerPlaneAddress);
+	uint8_t upperPlane = device->videoMemory->ReadU8(upperPlaneAddress);
+
+	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
+		buffer[x] = (READ_BIT(upperPlane, x) << 1) | READ_BIT(lowerPlane, x);
 }

@@ -8,20 +8,34 @@ namespace libnes
 
 namespace JoNES
 {
+	class Texture;
+
 	class DebuggerInterface
 	{
 	private:
 		libnes::Debugger* debugger;
 
+		Texture* patternTableLeft;
+		Texture* patternTableRight;
+
+		uint8_t* textureBuffer;
+		uint8_t* patternBuffer;
+
 	public:
 		DebuggerInterface(libnes::Debugger* debugger);
+		~DebuggerInterface();
 
 		void Update(float deltaTime);
 
 	private:
+		void DrawCPUWindow(bool* open);
+		void DrawPPUWindow(bool* open);
+
 		void DrawRegisters();
 		void DrawDisassembly();
 		void DrawBreakpoints();
+
+		void DecodePatternTable(Texture* texture, uint16_t address);
 
 		bool InputU16(const char* buttonLabel, char* buffer, uint16_t* input);
 	};

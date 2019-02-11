@@ -11,13 +11,14 @@ namespace JoNES
 
 	class Program;
 	class Shader;
+	class Texture;
 
 	class InterfaceRenderer
 	{
 	private:
 		Window& window;
 
-		GLuint fontTextureHandle;
+		Texture* fontTexture;
 
 		Program* program;
 		Shader* vertexShader;

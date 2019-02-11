@@ -30,7 +30,7 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 	memcpy(chrRom, chrRomSrc, chrRomSize);
 }
 
-uint8_t Cartridge::Read(uint16_t address) const
+uint8_t Cartridge::ReadMain(uint16_t address) const
 {
 	assert(address >= 0x6000);
 
@@ -44,7 +44,17 @@ uint8_t Cartridge::Read(uint16_t address) const
 	return prgRom[(address - 0x8000) % prgRomSize];
 }
 
-void Cartridge::Write(uint16_t address, uint8_t value)
+void Cartridge::WriteMain(uint16_t address, uint8_t value)
 {
 	assert(false);
+}
+
+uint8_t Cartridge::ReadVideo(uint16_t address) const
+{
+	return chrRom[address % chrRomSize];
+}
+
+void Cartridge::WriteVideo(uint16_t address, uint8_t value)
+{
+	//chrRom[address & chrRomSize] = value;
 }

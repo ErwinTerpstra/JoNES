@@ -50,6 +50,9 @@ namespace libnes
 
 		void PerformOAMDMA(uint8_t addressMSB);
 
+		void DecodeColor(uint8_t color, uint8_t* buffer) const;
+		void DecodePatternTable(uint16_t address, uint8_t* buffer);
+
 		uint64_t MasterClockCycles() const
 		{
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;
@@ -58,6 +61,8 @@ namespace libnes
 
 		void IncrementAddress();
 		void DrawScanline();
+
+		void DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
 	};
 }
 

@@ -35,7 +35,7 @@ uint8_t MainMemory::Read(uint16_t address)
 		return 0; // TODO: APU and IO registers
 
 	if (device->cartridge != NULL)
-		return device->cartridge->Read(address);
+		return device->cartridge->ReadMain(address);
 	else
 		return 0;
 }
@@ -68,7 +68,7 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 
 	if (device->cartridge != NULL)
 	{
-		device->cartridge->Write(address, value);
+		device->cartridge->WriteMain(address, value);
 		return;
 	}
 }

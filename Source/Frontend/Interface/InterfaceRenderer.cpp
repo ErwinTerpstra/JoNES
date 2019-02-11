@@ -4,9 +4,11 @@
 
 #include "Window.h"
 
+#include "Rendering/Texture.h"
 #include "Rendering/Program.h"
 #include "Rendering/Shader.h" 
 
+#include "libnes/libnes.h"
 #include "imgui/imgui.h"
 
 using namespace JoNES;
@@ -105,59 +107,38 @@ bool InterfaceRenderer::InitGraphicsObjects()
 
 void InterfaceRenderer::DestroyGraphicsObjects()
 {
-	if (vertexShader)
-	{
-		delete vertexShader;
-		vertexShader = NULL;
-	}
+	SAFE_DELETE(vertexShader);
+	SAFE_DELETE(fragmentShader);
+	SAFE_DELETE(program);
+	SAFE_DELETE(fontTexture);
 
-	if (fragmentShader)
-	{
-		delete fragmentShader;
-		fragmentShader = NULL;
-	}
-
-	if (program)
-	{
-		delete program;
-		program = NULL;
-	}
-
-	if (fontTextureHandle)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->TexID = 0;
-
-		glDeleteTextures(1, &fontTextureHandle);
-		fontTextureHandle = 0;
-	}
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->TexID = 0;
 }
 
 bool InterfaceRenderer::CreateFontTexture()
 {
-	// Build texture atlas
-	ImGuiIO& io = ImGui::GetIO();
-	unsigned char* pixels;
-	int width, height;
-
 	// Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) 
 	// because it is more likely to be compatible with user's existing shaders. 
 	// If your ImTextureId represent a higher-level concept than just a GL texture id, 
 	// consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
-	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   
+	ImGuiIO& io = ImGui::GetIO();
 
-	// Upload texture to graphics system
-	glGenTextures(1, &fontTextureHandle);
-	glBindTexture(GL_TEXTURE_2D, fontTextureHandle);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	unsigned char* pixels;
+	int width, height;
+	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
+	// Delete previous font texture
+	SAFE_DELETE(fontTexture);
+
+	// Instantiate new font
+	fontTexture = new Texture(width, height, true);
+	fontTexture->Load(pixels);
+	
 	// Store our identifier
-	io.Fonts->TexID = (ImTextureID)(intptr_t)fontTextureHandle;
+	io.Fonts->TexID = (ImTextureID)fontTexture;
 
-	return fontTextureHandle != 0;
+	return fontTexture->IsValid();
 }
 
 void InterfaceRenderer::Draw(ImDrawData* drawData)
@@ -244,7 +225,9 @@ void InterfaceRenderer::Draw(ImDrawData* drawData)
 					glScissor((int)clipRect.x, (int)(frameBufferHeight - clipRect.w), (int)(clipRect.z - clipRect.x), (int)(clipRect.w - clipRect.y));
 
 					// Bind texture, Draw
-					program->BindTexture("Texture", GL_TEXTURE0, (GLuint)(intptr_t)pcmd->TextureId);
+					Texture* texture = (Texture*)pcmd->TextureId;
+					program->BindTexture("Texture", GL_TEXTURE0, texture);
+
 					glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, indexBufferOffset);
 				}
 			}

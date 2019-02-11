@@ -3,6 +3,7 @@
 #include "Program.h"
 
 #include "Shader.h"
+#include "Texture.h"
 
 using namespace JoNES;
 
@@ -27,40 +28,44 @@ void Program::Prepare()
 
 void Program::Attach(Shader* shader)
 {
-	GL_CHECK_ERROR(glAttachShader(handle, shader->handle));
+	GL(glAttachShader(handle, shader->handle));
 }
 
 void Program::Link()
 {
-	GL_CHECK_ERROR(glLinkProgram(handle));
+	GL(glLinkProgram(handle));
 }
 
 void Program::Bind() const
 {
-	GL_CHECK_ERROR(glUseProgram(handle));
+	GL(glUseProgram(handle));
 }
 
-void Program::BindTexture(std::string uniformName, GLenum slot, GLuint texture)
+void Program::BindTexture(std::string uniformName, GLenum slot, Texture* texture)
 {
-	GL_CHECK_ERROR(glActiveTexture(slot));
+	GL(glActiveTexture(slot));
 
-	GL_CHECK_ERROR(glBindTexture(GL_TEXTURE_2D, texture));
-	GL_CHECK_ERROR(glUniform1i(GetUniformLocation(uniformName), slot - GL_TEXTURE0));
+	if (texture != NULL)
+		texture->Bind();
+	else
+		Texture::ClearBoundTexture();
+
+	GL(glUniform1i(GetUniformLocation(uniformName), slot - GL_TEXTURE0));
 }
 
 void Program::SetVector3(const std::string& uniformName, const float* v)
 {
-	GL_CHECK_ERROR(glUniform3f(GetUniformLocation(uniformName), v[0], v[1], v[2]));
+	GL(glUniform3f(GetUniformLocation(uniformName), v[0], v[1], v[2]));
 }
 
 void Program::SetVector4(const std::string& uniformName, const float* v)
 {
-	GL_CHECK_ERROR(glUniform4f(GetUniformLocation(uniformName), v[0], v[1], v[2], v[3]));
+	GL(glUniform4f(GetUniformLocation(uniformName), v[0], v[1], v[2], v[3]));
 }
 
 void Program::SetMatrix44(const std::string& uniformName, const float* m)
 {
-	GL_CHECK_ERROR(glUniformMatrix4fv(GetUniformLocation(uniformName), 1, GL_FALSE, m));
+	GL(glUniformMatrix4fv(GetUniformLocation(uniformName), 1, GL_FALSE, m));
 }
 
 GLint Program::GetUniformLocation(const std::string& name)

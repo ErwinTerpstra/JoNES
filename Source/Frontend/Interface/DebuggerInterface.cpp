@@ -2,6 +2,8 @@
 
 #include "DebuggerInterface.h"
 
+#include "Rendering/Texture.h"
+
 #include "TestSuite/TestSuite.h"
 
 #include "libnes/libnes.h"
@@ -12,13 +14,48 @@ using namespace JoNES;
 
 DebuggerInterface::DebuggerInterface(Debugger* debugger) : debugger(debugger)
 {
+	patternTableLeft = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
+	patternTableRight = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
 
+	textureBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT * 3];
+	patternBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT];
+}
+
+DebuggerInterface::~DebuggerInterface()
+{
+	SAFE_DELETE_ARRAY(textureBuffer);
+	SAFE_DELETE_ARRAY(patternBuffer);
+
+	SAFE_DELETE(patternTableLeft);
+	SAFE_DELETE(patternTableRight);
 }
 
 void DebuggerInterface::Update(float deltaTime)
 {
-	ImGui::Begin("Debugger");
+	static bool showCPUWindow = true;
+	static bool showPPUWindow = false;
 
+	{
+		ImGui::BeginMainMenuBar();
+
+		if (ImGui::BeginMenu("Windows"))
+		{
+			ImGui::MenuItem("CPU debugger", NULL, &showCPUWindow);
+			ImGui::MenuItem("PPU debugger", NULL, &showPPUWindow);
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	DrawCPUWindow(&showCPUWindow);
+	DrawPPUWindow(&showPPUWindow);
+}
+
+void DebuggerInterface::DrawCPUWindow(bool* open)
+{
+	ImGui::Begin("CPU debugger", open);
+	
 	ImGui::Columns(2, NULL, false);
 
 	{
@@ -58,19 +95,67 @@ void DebuggerInterface::Update(float deltaTime)
 		TestSuite test(debugger->emulator);
 		test.RunAutomated("../../Logs/JoNES_nestest.log");
 	}
-	
+
 	ImGui::Separator();
 
-	if (ImGui::CollapsingHeader("Registers"))
+	if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen))
 		DrawRegisters();
 
-	if (ImGui::CollapsingHeader("Disassembly"))
+	if (ImGui::CollapsingHeader("Disassembly", ImGuiTreeNodeFlags_DefaultOpen))
 		DrawDisassembly();
-	
-	if (ImGui::CollapsingHeader("Breakpoints"))
+
+	if (ImGui::CollapsingHeader("Breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
 		DrawBreakpoints();
 
 	ImGui::End();
+}
+
+void DebuggerInterface::DrawPPUWindow(bool* open)
+{
+	DecodePatternTable(patternTableLeft, NES_PPU_PATTERN0);
+	DecodePatternTable(patternTableRight, NES_PPU_PATTERN1);
+
+	ImGui::Begin("PPU debugger", open);
+
+	{
+		ImGui::Text("Pattern tables:");
+
+		const float patternTableScale = 2;
+		ImGui::Image(patternTableLeft, ImVec2(patternTableLeft->Width() * patternTableScale, patternTableRight->Height() * patternTableScale));
+		ImGui::SameLine();
+		ImGui::Image(patternTableRight, ImVec2(patternTableRight->Width() * patternTableScale, patternTableRight->Height() * patternTableScale));
+	}
+
+	ImGui::End();
+}
+
+void DebuggerInterface::DecodePatternTable(Texture* texture, uint16_t address)
+{
+	PPU* ppu = debugger->emulator->device->ppu;
+
+	// Decode the pattern table
+	ppu->DecodePatternTable(address, patternBuffer);
+
+	// Convert color indices to RGB
+	for (int y = 0; y < NES_PPU_PATTERN_TABLE_HEIGHT; ++y)
+	{
+		for (int x = 0; x < NES_PPU_PATTERN_TABLE_WIDTH; ++x)
+		{
+			int pixelIndex = y * NES_PPU_PATTERN_TABLE_WIDTH + x;
+			
+			uint8_t indexedColor = patternBuffer[pixelIndex];
+			uint8_t grayscale = indexedColor * 64;
+			
+			textureBuffer[pixelIndex * 3 + 0] = grayscale;
+			textureBuffer[pixelIndex * 3 + 1] = grayscale;
+			textureBuffer[pixelIndex * 3 + 2] = grayscale;
+
+			//ppu->DecodeColor(patternBuffer[index], textureBuffer + (index * 3));
+		}
+	}
+
+	// Load the new RGB data in the texture
+	texture->Load(textureBuffer);
 }
 
 void DebuggerInterface::DrawRegisters()

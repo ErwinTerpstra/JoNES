@@ -1,6 +1,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+// Bit manipulation
 #define READ_MASK(value, mask) (((value) & mask) == mask)
 #define READ_BIT(value, bit) (((value) & (1 << bit)) != 0)
 
@@ -16,5 +17,20 @@
 #define REINTERPRET(value, type) (*reinterpret_cast<const type*>(&value))
 
 #define DETECT_CARRY(a, b, r) ((a & b) | (a & ~r) | (b & ~r))
+
+// Memory
+#define SAFE_DELETE(ptr) \
+if (ptr) \
+{ \
+	delete ptr; \
+	ptr = NULL; \
+} \
+
+#define SAFE_DELETE_ARRAY(ptr) \
+if (ptr) \
+{ \
+	delete[] ptr; \
+	ptr = NULL; \
+} \
 
 #endif
