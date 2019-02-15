@@ -81,11 +81,11 @@ bool InterfaceRenderer::InitGraphicsObjects()
 
 	// Create shaders
 	vertexShader = new Shader(GL_VERTEX_SHADER);
-	if (!vertexShader->Compile(vertexShaderSources, 2))
+	if (!vertexShader->Compile(&vertexShaderSources[0], 2))
 		return false;
 
 	fragmentShader = new Shader(GL_FRAGMENT_SHADER);
-	if (!fragmentShader->Compile(fragmentShaderSources, 2))
+	if (!fragmentShader->Compile(&fragmentShaderSources[0], 2))
 		return false;
 
 	// Create program
@@ -107,6 +107,9 @@ bool InterfaceRenderer::InitGraphicsObjects()
 
 void InterfaceRenderer::DestroyGraphicsObjects()
 {
+	glDeleteBuffers(1, &vboHandle);
+	glDeleteBuffers(1, &elementsHandle);
+
 	SAFE_DELETE(vertexShader);
 	SAFE_DELETE(fragmentShader);
 	SAFE_DELETE(program);
@@ -184,16 +187,23 @@ void InterfaceRenderer::Draw(ImDrawData* drawData)
 	
 	// Recreate the VAO every time
 	// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
+	
+	GLint positionAttribute = program->GetAttribLocation("Position");
+	GLint uvAttribute = program->GetAttribLocation("UV");
+	GLint colorAttribute = program->GetAttribLocation("Color");
+	
 	GLuint vaoHandle = 0;
 	glGenVertexArrays(1, &vaoHandle);
 	glBindVertexArray(vaoHandle);
 	glBindBuffer(GL_ARRAY_BUFFER, vboHandle);
-	glEnableVertexAttribArray(program->GetAttribLocation("Position"));
-	glEnableVertexAttribArray(program->GetAttribLocation("UV"));
-	glEnableVertexAttribArray(program->GetAttribLocation("Color"));
-	glVertexAttribPointer(program->GetAttribLocation("Position"), 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
-	glVertexAttribPointer(program->GetAttribLocation("UV"), 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
-	glVertexAttribPointer(program->GetAttribLocation("Color"), 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
+
+	glEnableVertexAttribArray(positionAttribute);
+	glEnableVertexAttribArray(uvAttribute);
+	glEnableVertexAttribArray(colorAttribute);
+
+	glVertexAttribPointer(positionAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, pos));
+	glVertexAttribPointer(uvAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, uv));
+	glVertexAttribPointer(colorAttribute, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)IM_OFFSETOF(ImDrawVert, col));
 
 	// Draw
 	ImVec2 pos = drawData->DisplayPos;

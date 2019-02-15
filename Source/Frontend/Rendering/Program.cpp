@@ -5,6 +5,8 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "libnes/libnes.h"
+
 using namespace JoNES;
 
 Program::Program()
@@ -19,16 +21,26 @@ Program::~Program()
 		glDeleteProgram(handle);
 		handle = 0;
 	}
-}
 
-void Program::Prepare()
-{
-	Bind();
+	SAFE_DELETE(vertexShader);
+	SAFE_DELETE(fragmentShader);
 }
 
 void Program::Attach(Shader* shader)
 {
 	GL(glAttachShader(handle, shader->handle));
+}
+
+Shader* Program::CreateVertexShader()
+{
+	vertexShader = new Shader(GL_VERTEX_SHADER);
+	return vertexShader;
+}
+
+Shader* Program::CreateFragmentShader()
+{
+	fragmentShader = new Shader(GL_FRAGMENT_SHADER);
+	return fragmentShader;
 }
 
 void Program::Link()
@@ -102,4 +114,30 @@ void Program::SetAttribLocation(const std::string& name, GLuint location)
 {
 	glBindAttribLocation(handle, location, name.c_str());
 	attribLocations[name] = location;
+}
+
+Program* Program::Create(const GLchar* vertexShaderSource, const GLchar* fragmentShaderSource)
+{
+	const GLchar* glslVersionString = "#version 410 core\n";
+	
+	Program* program = new Program();
+
+	const GLchar* vertexShaderSources[2] = { glslVersionString, vertexShaderSource };
+	const GLchar* fragmentShaderSources[2] = { glslVersionString, fragmentShaderSource };
+
+	// Create shaders
+	Shader* vertexShader = program->CreateVertexShader();
+	if (!vertexShader->Compile(&vertexShaderSources[0], 2))
+		return NULL;
+
+	Shader* fragmentShader = program->CreateFragmentShader();
+	if (!fragmentShader->Compile(&fragmentShaderSources[0], 2))
+		return NULL;
+
+	// Create program
+	program->Attach(vertexShader);
+	program->Attach(fragmentShader);
+	program->Link();
+
+	return program;
 }

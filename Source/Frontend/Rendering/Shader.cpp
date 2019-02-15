@@ -38,7 +38,7 @@ bool Shader::Compile(const char** source, int amount)
 		printf("[Shader]: Source:\n");
 
 		for (int sourceIdx = 0; sourceIdx < amount; ++sourceIdx)
-			printf(source[amount]);
+			printf("%s", source[amount]);
 
 		return false;
 	}

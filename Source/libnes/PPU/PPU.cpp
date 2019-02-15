@@ -16,7 +16,7 @@ uint8_t NES_2C02_PALETTE_COLORS[] =
 	236, 238, 236, 168, 204, 236, 188, 188, 236, 212, 178, 236, 236, 174, 236, 236, 174, 212, 236, 180, 176, 228, 196, 144, 204, 210, 120, 180, 222, 120, 168, 226, 144, 152, 226, 180, 160, 214, 228, 160, 162, 160, 0, 0, 0, 0, 0, 0,
 };
 
-PPU::PPU(Device* device) : device(device)
+PPU::PPU(Device* device, uint8_t* frameBuffer) : device(device), frameBuffer(frameBuffer)
 {
 	oam = new uint8_t[NES_PPU_OAM_SIZE];
 }
@@ -177,7 +177,41 @@ void PPU::IncrementAddress()
 
 void PPU::DrawScanline()
 {
+	// Read nametable and pattern table sections from the control register
+	uint16_t baseNametableAddress = NES_PPU_NAMETABLE0 | ((controlBits & 0x03) << 10);
+	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
+	uint8_t y = scanline;
+	uint8_t tileBuffer[NES_PPU_TILE_SIZE];
+
+	for (uint8_t x = 0; x <= 0xFF; ++x)
+	{
+		// Determine which nametable entry to use
+		// TODO: implement scrolling
+		uint8_t nametableX = x >> 3;
+		uint8_t nametableY = y >> 3;
+		uint16_t nametableAddress = baseNametableAddress + nametableX + (nametableY * NES_PPU_NAMETABLE_WIDTH);
+
+		// Determine location of tile in pattern table
+		uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
+		uint16_t patternTableAddress = basePatternTableAddress + patternTableIndex << 4; // Pattern table tiles are 16 bytes per tile
+		
+		uint8_t tileY = y - nametableY;		
+		uint8_t tileX = x - nametableX;
+		DecodeTileRow(patternTableAddress, tileY, tileBuffer);
+
+		// Compose the palette index for this tile
+		uint8_t paletteIndex = SET_BIT(tileBuffer[tileX], 4); // Set bit 4 when selecting palette index for background tiles 
+		
+		// TODO: attribute table bits
+		
+		// Read palette color
+		uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
+		uint8_t color = device->videoMemory->ReadU8(paletteAddress);
+
+		// Decode color and write to framebuffer
+		DecodeColor(color, frameBuffer + (y * NES_FRAME_WIDTH + x) * 3);
+	}
 }
 
 void PPU::DecodeColor(uint8_t color, uint8_t* buffer) const
@@ -205,10 +239,13 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 void PPU::DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
 {
 	uint16_t lowerPlaneAddress = (address & 0x1000) | (row << 8) | (column << 4) | (y & 0x07);
-	uint16_t upperPlaneAddress = lowerPlaneAddress | 0x08;
+	return DecodeTileRow(lowerPlaneAddress, y, buffer);
+}
 
-	uint8_t lowerPlane = device->videoMemory->ReadU8(lowerPlaneAddress);
-	uint8_t upperPlane = device->videoMemory->ReadU8(upperPlaneAddress);
+void PPU::DecodeTileRow(uint16_t address, uint8_t y, uint8_t* buffer)
+{
+	uint8_t lowerPlane = device->videoMemory->ReadU8(address);
+	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
 		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);

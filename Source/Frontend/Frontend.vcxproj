@@ -177,6 +177,7 @@
     <ClInclude Include="imgui\imstb_rectpack.h" />
     <ClInclude Include="imgui\imstb_textedit.h" />
     <ClInclude Include="imgui\imstb_truetype.h" />
+    <ClInclude Include="Rendering\Quad.h" />
     <ClInclude Include="Rendering\Renderer.h" />
     <ClInclude Include="Rendering\libgl.h" />
     <ClInclude Include="Rendering\glutil.h" />
@@ -211,6 +212,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Rendering\Quad.cpp" />
     <ClCompile Include="Rendering\Renderer.cpp" />
     <ClCompile Include="Rendering\Program.cpp" />
     <ClCompile Include="Rendering\Shader.cpp" />

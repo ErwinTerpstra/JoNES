@@ -17,13 +17,17 @@ namespace JoNES
 
 		GLuint handle;
 
+		Shader* vertexShader;
+		Shader* fragmentShader;
+
 	public:
 		Program();
 		~Program();
-
-		void Prepare();
-
+		
 		void Attach(Shader* shader);
+		Shader* CreateVertexShader();
+		Shader* CreateFragmentShader();
+
 		void Link();
 		void Bind() const;
 
@@ -37,6 +41,8 @@ namespace JoNES
 		GLint GetAttribLocation(const std::string& name);
 
 		void SetAttribLocation(const std::string& name, GLuint location);
+
+		static Program* Create(const GLchar* vertexShaderSource, const GLchar* fragmentShaderSource);
 	};
 }
 

@@ -33,6 +33,9 @@ bool App::Init()
 
 	time = (float) glfwGetTime();
 
+	emulator = new Emulator();
+	debugger = new Debugger(emulator);
+
 	window = Window::Create(1280, 720, "JoNES emulator");
 
 	if (!window)
@@ -41,7 +44,7 @@ bool App::Init()
 		return false;
 	}
 
-	renderer = new Renderer(*window);
+	renderer = new Renderer(window, emulator);
 	if (!renderer->Init())
 	{
 		Shutdown();
@@ -55,9 +58,6 @@ bool App::Init()
 		return false;
 	}
 
-	emulator = new Emulator();
-	debugger = new Debugger(emulator);
-
 	debuggerInterface = new DebuggerInterface(debugger);
 	
 	return true;
@@ -65,14 +65,9 @@ bool App::Init()
 
 void App::Shutdown()
 {
-	if (debuggerInterface)
-		delete debuggerInterface;
-
-	if (debugger)
-		delete debugger;
-
-	if (emulator)
-		delete emulator;
+	SAFE_DELETE(debuggerInterface);
+	SAFE_DELETE(debugger);
+	SAFE_DELETE(emulator);
 
 	if (interfaceController)
 	{
@@ -89,7 +84,6 @@ void App::Shutdown()
 	if (window)
 		delete window;
 
-	emulator = NULL;
 	interfaceController = NULL;
 	renderer = NULL;
 	window = NULL;

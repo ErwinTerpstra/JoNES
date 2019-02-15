@@ -19,15 +19,19 @@ using namespace libnes;
 
 Emulator::Emulator()
 {
+	frameBuffer = new uint8_t[NES_FRAME_WIDTH * NES_FRAME_HEIGHT * 3];
+
 	device = new Device();
 	device->cpu = new CPU(device);
-	device->ppu = new PPU(device);
+	device->ppu = new PPU(device, frameBuffer);
 	device->mainMemory = new MemoryBus(new MainMemory(device));
 	device->videoMemory = new MemoryBus(new VideoMemory(device));
 }
 
 Emulator::~Emulator()
 {
+	SAFE_DELETE_ARRAY(frameBuffer);
+	
 	if (device)
 	{
 		delete device->cpu;

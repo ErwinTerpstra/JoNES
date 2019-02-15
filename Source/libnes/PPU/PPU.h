@@ -20,6 +20,7 @@ namespace libnes
 	{
 	private:
 		Device* device;
+		uint8_t* frameBuffer;
 
 		uint8_t* oam;
 
@@ -38,7 +39,7 @@ namespace libnes
 		bool nmiState;
 
 	public:
-		PPU(Device* device);
+		PPU(Device* device, uint8_t* frameBuffer);
 		~PPU();
 
 		void Reset();
@@ -63,6 +64,7 @@ namespace libnes
 		void DrawScanline();
 
 		void DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
+		void DecodeTileRow(uint16_t address, uint8_t y, uint8_t* buffer);
 	};
 }
 

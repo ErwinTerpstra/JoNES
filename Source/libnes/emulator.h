@@ -1,6 +1,8 @@
 #ifndef _EMULATOR_H_
 #define _EMULATOR_H_
 
+#include "environment.h"
+
 namespace libnes
 {
 	class Cartridge;
@@ -12,6 +14,8 @@ namespace libnes
 	{
 	public:
 		Device* device;
+
+		uint8_t* frameBuffer;
 
 	public:
 		Emulator();
