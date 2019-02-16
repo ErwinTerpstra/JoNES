@@ -21,4 +21,7 @@
 
 #include "Debugger/Debugger.h"
 
+#include "Util/Vector.h"
+#include "Util/Event.h"
+
 #endif

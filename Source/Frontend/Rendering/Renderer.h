@@ -1,10 +1,7 @@
 #ifndef _RENDERER_H_
 #define _RENDERER_H_
 
-namespace libnes
-{
-	class Emulator;
-}
+#include "libnes/libnes.h"
 
 namespace JoNES
 {
@@ -15,7 +12,8 @@ namespace JoNES
 	class Texture;
 	class Program;
 	class Quad;
-
+	
+	class Renderer;
 	class Renderer
 	{
 	private:
@@ -29,6 +27,8 @@ namespace JoNES
 
 		InterfaceRenderer* interfaceRenderer;
 
+		libnes::EventHandlerProxy<Renderer> vblankEnterred;
+
 	public:
 		Renderer(Window* window, libnes::Emulator* emulator);
 
@@ -36,9 +36,12 @@ namespace JoNES
 		void Shutdown();
 
 		void Render();
+		void LoadEmulatorFrameBuffer();
 
 	private:
 		void RenderEmulator();
+
+		void OnVBlankEnterred();
 	};
 }
 

@@ -50,8 +50,6 @@ void InterfaceRenderer::Render()
 
 bool InterfaceRenderer::InitGraphicsObjects()
 {
-	const GLchar* glslVersionString = "#version 410 core\n";
-
 	const GLchar* vertexShaderSource =
 		"layout (location = 0) in vec2 Position;\n"
 		"layout (location = 1) in vec2 UV;\n"
@@ -76,23 +74,7 @@ bool InterfaceRenderer::InitGraphicsObjects()
 		"    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
 		"}\n";
 
-	const GLchar* vertexShaderSources[2] = { glslVersionString, vertexShaderSource };
-	const GLchar* fragmentShaderSources[2] = { glslVersionString, fragmentShaderSource };
-
-	// Create shaders
-	vertexShader = new Shader(GL_VERTEX_SHADER);
-	if (!vertexShader->Compile(&vertexShaderSources[0], 2))
-		return false;
-
-	fragmentShader = new Shader(GL_FRAGMENT_SHADER);
-	if (!fragmentShader->Compile(&fragmentShaderSources[0], 2))
-		return false;
-
-	// Create program
-	program = new Program();
-	program->Attach(vertexShader);
-	program->Attach(fragmentShader);
-	program->Link();
+	program = Program::Create(vertexShaderSource, fragmentShaderSource);
 
 	// Create buffers
 	glGenBuffers(1, &vboHandle);
@@ -181,7 +163,7 @@ void InterfaceRenderer::Draw(ImDrawData* drawData)
 
 	program->Bind();
 	program->SetMatrix44("ProjMtx", &orthoProjection[0][0]);
-	program->BindTexture("Texture", GL_TEXTURE0, 0);
+	program->BindTexture("Texture", GL_TEXTURE0, NULL);
 
 	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 	

@@ -22,6 +22,8 @@ VideoMemory::~VideoMemory()
 
 uint8_t VideoMemory::Read(uint16_t address)
 {
+	address &= 0x3FFF;
+
 	if (address < 0x2000)
 		return device->cartridge->ReadVideo(address);
 
@@ -31,11 +33,13 @@ uint8_t VideoMemory::Read(uint16_t address)
 	if (address < 0x4000)
 		return paletteRam[(address - 0x3F00) & NES_PPU_PALETTE_RAM_ADDRESS_MASK];
 
-	assert(false);		
+	assert(false);
 }
 
 void VideoMemory::Write(uint16_t address, uint8_t value)
 {
+	address &= 0x3FFF;
+
 	if (address < 0x2000)
 	{
 		device->cartridge->WriteVideo(address, value);

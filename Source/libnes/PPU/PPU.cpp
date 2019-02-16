@@ -54,7 +54,8 @@ void PPU::Tick()
 
 	if (localCycle == 0)
 	{
-		DrawScanline();
+		if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE)
+			DrawScanline();
 
 		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
 	}
@@ -64,6 +65,7 @@ void PPU::Tick()
 	{
 		// Set vblank bit
 		statusRegister = SET_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+		vblankStarted.Fire();
 	}
 
 	if (scanline == NES_PPU_PRE_RENDER_SCANLINE && localCycle == 1)
@@ -181,24 +183,30 @@ void PPU::DrawScanline()
 	uint16_t baseNametableAddress = NES_PPU_NAMETABLE0 | ((controlBits & 0x03) << 10);
 	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
-	uint8_t y = scanline;
+	uint16_t y = scanline;
 	uint8_t tileBuffer[NES_PPU_TILE_SIZE];
 
-	for (uint8_t x = 0; x <= 0xFF; ++x)
+	for (uint16_t x = 0; x < NES_FRAME_WIDTH; ++x)
 	{
 		// Determine which nametable entry to use
 		// TODO: implement scrolling
 		uint8_t nametableX = x >> 3;
 		uint8_t nametableY = y >> 3;
-		uint16_t nametableAddress = baseNametableAddress + nametableX + (nametableY * NES_PPU_NAMETABLE_WIDTH);
+		uint16_t nametableAddress = baseNametableAddress + nametableX + (nametableY * NES_PPU_NAMETABLE_TILES_PER_ROW);
 
 		// Determine location of tile in pattern table
 		uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
-		uint16_t patternTableAddress = basePatternTableAddress + patternTableIndex << 4; // Pattern table tiles are 16 bytes per tile
+		uint16_t patternTableAddress = basePatternTableAddress + (patternTableIndex << 4); // Pattern table tiles are 16 bytes per tile
 		
-		uint8_t tileY = y - nametableY;		
-		uint8_t tileX = x - nametableX;
+		uint8_t tileY = y - (nametableY << 3);
+		uint8_t tileX = x - (nametableX << 3);
 		DecodeTileRow(patternTableAddress, tileY, tileBuffer);
+
+		uint32_t frameBufferOffset = (y * NES_FRAME_WIDTH + x) * 3;
+		frameBuffer[frameBufferOffset + 0] = tileBuffer[tileX] * 64;
+		frameBuffer[frameBufferOffset + 1] = tileBuffer[tileX] * 64;
+		frameBuffer[frameBufferOffset + 2] = tileBuffer[tileX] * 64;
+		continue;
 
 		// Compose the palette index for this tile
 		uint8_t paletteIndex = SET_BIT(tileBuffer[tileX], 4); // Set bit 4 when selecting palette index for background tiles 

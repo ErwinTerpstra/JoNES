@@ -14,6 +14,11 @@ namespace libnes
 		uint32_t capacity;
 
 	public:
+		Vector() : Vector(10)
+		{
+
+		}
+
 		Vector(uint32_t capacity) : length(0), capacity(capacity)
 		{
 			data = new T[capacity];
@@ -32,6 +37,28 @@ namespace libnes
 
 			data[length] = element;
 			++length;
+		}
+
+		int32_t IndexOf(const T& element)
+		{
+			for (uint32_t i = 0; i < length; ++i)
+			{
+				if (data[i] == element)
+					return i;
+			}
+
+			return -1;
+		}
+
+		bool Remove(const T& element)
+		{
+			int32_t index = IndexOf(element);
+
+			if (index == -1)
+				return false;
+
+			RemoveIndex(index);
+			return true;
 		}
 
 		void RemoveIndex(uint32_t index)

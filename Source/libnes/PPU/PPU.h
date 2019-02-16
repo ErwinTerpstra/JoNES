@@ -4,6 +4,8 @@
 #include "environment.h"
 #include "nes.h"
 
+#include "Util/Event.h"
+
 namespace libnes
 {
 	struct Sprite
@@ -37,6 +39,9 @@ namespace libnes
 		bool writeLSB;
 
 		bool nmiState;
+
+	public:
+		Event vblankStarted;
 
 	public:
 		PPU(Device* device, uint8_t* frameBuffer);

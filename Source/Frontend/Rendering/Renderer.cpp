@@ -17,9 +17,10 @@
 using namespace JoNES;
 using namespace libnes;
 
-Renderer::Renderer(Window* window, Emulator* emulator) : window(window), emulator(emulator)
+Renderer::Renderer(Window* window, Emulator* emulator) : 
+	window(window), emulator(emulator), vblankEnterred(this, &Renderer::OnVBlankEnterred)
 {
-
+	emulator->device->ppu->vblankStarted.RegisterEventHandler(&vblankEnterred);
 }
 
 bool Renderer::Init()
@@ -52,7 +53,7 @@ bool Renderer::Init()
 		"layout (location = 0) out vec4 Out_Color;\n"
 		"void main()\n"
 		"{\n"
-		"    Out_Color = vec4(Frag_UV.st, 0, 1);//texture(Texture, Frag_UV.st);\n"
+		"    Out_Color = texture(Texture, Frag_UV.st);\n"
 		"}\n";
 
 	frameBufferShader = Program::Create(vertexShaderSource, fragmentShaderSource);
@@ -83,7 +84,7 @@ void Renderer::Render()
 	glScissor(0, 0, frameBufferWidth, frameBufferHeight);
 
 	// Clear frame buffer
-	glClearColor(0, 0, 0.1, 0);
+	glClearColor(0, 0, 0.1f, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// Render the emulator frame
@@ -98,10 +99,24 @@ void Renderer::Render()
 
 void Renderer::RenderEmulator()
 {
-	frameBufferTexture->Load(emulator->frameBuffer);
+	glDisable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_SCISSOR_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	frameBufferShader->Bind();
 	frameBufferShader->BindTexture("Texture", GL_TEXTURE0, frameBufferTexture);
 
 	frameBufferQuad->Render(frameBufferShader);
+}
+
+void Renderer::LoadEmulatorFrameBuffer()
+{
+	frameBufferTexture->Load(emulator->frameBuffer);
+}
+
+void Renderer::OnVBlankEnterred()
+{
+	LoadEmulatorFrameBuffer();
 }
