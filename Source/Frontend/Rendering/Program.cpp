@@ -65,6 +65,11 @@ void Program::BindTexture(std::string uniformName, GLenum slot, Texture* texture
 	GL(glUniform1i(GetUniformLocation(uniformName), slot - GL_TEXTURE0));
 }
 
+void Program::SetFloat(const std::string& uniformName, float f)
+{
+	GL(glUniform1f(GetUniformLocation(uniformName), f));
+}
+
 void Program::SetVector3(const std::string& uniformName, const float* v)
 {
 	GL(glUniform3f(GetUniformLocation(uniformName), v[0], v[1], v[2]));

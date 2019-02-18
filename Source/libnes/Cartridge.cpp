@@ -14,7 +14,7 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 {
 	CartridgeHeader_iNES* header = reinterpret_cast<CartridgeHeader_iNES*>(buffer);
 
-	assert(header->GetMapper() == 0);
+ 	assert(header->GetMapper() == 0);
 	assert(!header->IsNES20());
 
 	prgRomSize = header->GetPrgRomSizeInBytes();

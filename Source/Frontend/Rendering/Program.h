@@ -33,6 +33,7 @@ namespace JoNES
 
 		void BindTexture(std::string uniformName, GLenum slot, Texture* texture);
 		
+		void SetFloat(const std::string& uniformName, float f);
 		void SetVector3(const std::string& uniformName, const float* v);
 		void SetVector4(const std::string& uniformName, const float* v);
 		void SetMatrix44(const std::string& uniformName, const float* m);

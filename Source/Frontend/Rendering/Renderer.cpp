@@ -7,6 +7,7 @@
 #include "Quad.h"
 
 #include "Window.h"
+#include "File.h"
 
 #include "Interface/InterfaceRenderer.h"
 
@@ -37,26 +38,13 @@ bool Renderer::Init()
 	frameBufferTexture = new Texture(NES_FRAME_WIDTH, NES_FRAME_HEIGHT, false);
 	frameBufferQuad = new Quad();
 
-	const GLchar* vertexShaderSource =
-		"layout (location = 0) in vec3 Position;\n"
-		"layout (location = 1) in vec2 UV;\n"
-		"out vec2 Frag_UV;\n"
-		"void main()\n"
-		"{\n"
-		"    Frag_UV = UV;\n"
-		"    gl_Position = vec4(Position.xyz,1);\n"
-		"}\n";
-
-	const GLchar* fragmentShaderSource =
-		"in vec2 Frag_UV;\n"
-		"uniform sampler2D Texture;\n"
-		"layout (location = 0) out vec4 Out_Color;\n"
-		"void main()\n"
-		"{\n"
-		"    Out_Color = texture(Texture, Frag_UV.st);\n"
-		"}\n";
+	char* vertexShaderSource = File::ReadFile("../../Shaders/framebuffer_vert.glsl");
+	char* fragmentShaderSource = File::ReadFile("../../Shaders/framebuffer_frag.glsl");
 
 	frameBufferShader = Program::Create(vertexShaderSource, fragmentShaderSource);
+
+	delete vertexShaderSource;
+	delete fragmentShaderSource;
 
 	return true;
 }
@@ -105,8 +93,16 @@ void Renderer::RenderEmulator()
 	glDisable(GL_SCISSOR_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	int windowWidth, windowHeight;
+	window->GetFrameBufferSize(&windowWidth, &windowHeight);
+
+	int textureWidth = frameBufferTexture->Width();
+	int textureHeight = frameBufferTexture->Height();
+
 	frameBufferShader->Bind();
-	frameBufferShader->BindTexture("Texture", GL_TEXTURE0, frameBufferTexture);
+	frameBufferShader->SetFloat("screenRatio", windowWidth / (float)windowHeight);
+	frameBufferShader->SetFloat("textureRatio", textureWidth / (float)textureHeight);
+	frameBufferShader->BindTexture("mainTexture", GL_TEXTURE0, frameBufferTexture);
 
 	frameBufferQuad->Render(frameBufferShader);
 }

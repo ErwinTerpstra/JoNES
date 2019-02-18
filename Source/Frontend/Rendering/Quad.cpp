@@ -33,17 +33,14 @@ Quad::~Quad()
 
 void Quad::Render(Program* program)
 {
-	GLint positionAttribute = program->GetAttribLocation("Position");
-	GLint uvAttribute = program->GetAttribLocation("UV");
+	GLint positionAttribute = program->GetAttribLocation("position");
 
 	GL(glBindVertexArray(vaoHandle));
 	GL(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
 
 	GL(glEnableVertexAttribArray(positionAttribute));
-	GL(glEnableVertexAttribArray(uvAttribute));
 
-	GL(glVertexAttribPointer(positionAttribute,		3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*) 0));
-	GL(glVertexAttribPointer(uvAttribute,			2, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*) (3 * sizeof(float))));
+	GL(glVertexAttribPointer(positionAttribute,	3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE, (void*) 0));
 
 	GL(glDrawElements(GL_TRIANGLES, TRIANGLE_COUNT * 3, GL_UNSIGNED_SHORT, (void*) 0));
 
