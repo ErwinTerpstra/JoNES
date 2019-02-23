@@ -205,9 +205,10 @@ void PPU::DrawScanline()
 		//DecodeTileSlice(patternTableAddress, tileY, tileBuffer);
 
 		uint32_t frameBufferOffset = (y * NES_FRAME_WIDTH + x) * 3;
-		frameBuffer[frameBufferOffset + 0] = tileBuffer[tileX] * 64;
-		frameBuffer[frameBufferOffset + 1] = tileBuffer[tileX] * 64;
-		frameBuffer[frameBufferOffset + 2] = tileBuffer[tileX] * 64;
+		uint8_t indexedColor = tileBuffer[tileX];
+		frameBuffer[frameBufferOffset + 0] = patternTableIndex;
+		frameBuffer[frameBufferOffset + 1] = patternTableIndex;
+		frameBuffer[frameBufferOffset + 2] = patternTableIndex;
 		continue;
 
 		// Compose the palette index for this tile
