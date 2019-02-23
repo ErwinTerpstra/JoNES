@@ -1,5 +1,4 @@
 #include "Cartridge.h"
-#include "CartridgeHeader.h"
 
 #include "debug.h"
 
@@ -12,13 +11,13 @@ Cartridge::Cartridge()
 
 void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 {
-	CartridgeHeader_iNES* header = reinterpret_cast<CartridgeHeader_iNES*>(buffer);
+	memcpy(&header, buffer, sizeof(CartridgeHeader_iNES));
 
-	assert(header->GetMapper() == 0);
-	assert(!header->IsNES20());
+	assert(header.GetMapper() == 0);
+	assert(!header.IsNES20());
 
-	prgRomSize = header->GetPrgRomSizeInBytes();
-	chrRomSize = header->GetChrRomSizeInBytes();
+	prgRomSize = header.GetPrgRomSizeInBytes();
+	chrRomSize = header.GetChrRomSizeInBytes();
 
 	prgRom = new uint8_t[prgRomSize];
 	chrRom = new uint8_t[chrRomSize];
@@ -46,15 +45,48 @@ uint8_t Cartridge::ReadMain(uint16_t address) const
 
 void Cartridge::WriteMain(uint16_t address, uint8_t value)
 {
-	assert(false);
+
 }
 
 uint8_t Cartridge::ReadVideo(uint16_t address) const
 {
-	return chrRom[address % chrRomSize];
+	if (READ_BIT(address, 13))
+	{
+		// Read from cartridge VRAM
+		assert(false);
+		return 0;
+	}
+	else
+		return chrRom[address % chrRomSize];
 }
 
 void Cartridge::WriteVideo(uint16_t address, uint8_t value)
 {
-	//chrRom[address & chrRomSize] = value;
+	if (READ_BIT(address, 13))
+	{
+		// Write to cartridge VRAM
+		assert(false);
+		return;
+	}
+}
+
+bool Cartridge::GetVideoRamA10(uint16_t address) const
+{
+	switch (header.GetMirroring())
+	{
+		case MIRROR_HORIZONTAL:
+			return READ_BIT(address, 11);
+
+		case MIRROR_VERTICAL:
+			return READ_BIT(address, 10);
+
+		default:
+			assert(false);
+			return 0;
+	}
+}
+
+bool Cartridge::GetVideoRamEnabled(uint16_t address) const
+{
+	return READ_BIT(address, 13);
 }

@@ -200,7 +200,9 @@ void PPU::DrawScanline()
 		
 		uint8_t tileY = y - (nametableY << 3);
 		uint8_t tileX = x - (nametableX << 3);
-		DecodeTileRow(patternTableAddress, tileY, tileBuffer);
+
+		DecodeTileSlice(basePatternTableAddress, nametableX, nametableY, tileY, tileBuffer);
+		//DecodeTileSlice(patternTableAddress, tileY, tileBuffer);
 
 		uint32_t frameBufferOffset = (y * NES_FRAME_WIDTH + x) * 3;
 		frameBuffer[frameBufferOffset + 0] = tileBuffer[tileX] * 64;
@@ -237,20 +239,20 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 		{
 			for (uint8_t column = 0; column < NES_PPU_PATTERN_TABLE_TILES_PER_COLUMN; ++column)
 			{
-				DecodeTileRow(address, column, row, y, buffer);
+				DecodeTileSlice(address, column, row, y, buffer);
 				buffer += NES_PPU_TILE_SIZE;
 			}
 		}
 	}
 }
 
-void PPU::DecodeTileRow(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
 {
 	uint16_t lowerPlaneAddress = (address & 0x1000) | (row << 8) | (column << 4) | (y & 0x07);
-	return DecodeTileRow(lowerPlaneAddress, y, buffer);
+	return DecodeTileSlice(lowerPlaneAddress, y, buffer);
 }
 
-void PPU::DecodeTileRow(uint16_t address, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t address, uint8_t y, uint8_t* buffer)
 {
 	uint8_t lowerPlane = device->videoMemory->ReadU8(address);
 	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);

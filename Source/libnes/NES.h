@@ -23,8 +23,8 @@
 #define NES_CPU_RAM_SIZE						0x0800
 
 // PPU ram
-#define NES_PPU_RAM_SIZE						0x2000
-#define NES_PPU_RAM_ADDRESS_MASK				(NES_PPU_RAM_SIZE - 1)
+#define NES_PPU_RAM_SIZE						0x800
+#define NES_PPU_RAM_ADDRESS_MASK				0x7FF
 
 #define NES_PPU_PATTERN0						0x0000
 #define NES_PPU_PATTERN1						0x1000

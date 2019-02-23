@@ -3,12 +3,16 @@
 
 #include "environment.h"
 
+#include "CartridgeHeader.h"
+
 namespace libnes
 {
 	class Cartridge
 	{
 
 	private:
+		CartridgeHeader_iNES header;
+
 		uint8_t* prgRom;
 		uint8_t* chrRom;
 
@@ -25,6 +29,9 @@ namespace libnes
 		
 		uint8_t ReadVideo(uint16_t address) const;
 		void WriteVideo(uint16_t address, uint8_t value);
+
+		bool GetVideoRamA10(uint16_t address) const;
+		bool GetVideoRamEnabled(uint16_t address) const;
 	};
 }
 

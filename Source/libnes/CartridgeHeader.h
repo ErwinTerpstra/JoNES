@@ -2,9 +2,17 @@
 #define _CARTRIDGE_HEADER_H_
 
 #include "environment.h"
+#include "util.h"
 
 namespace libnes
 {
+	enum NametableMirroring
+	{
+		MIRROR_NONE,
+		MIRROR_HORIZONTAL,
+		MIRROR_VERTICAL,
+	};
+
 	struct CartridgeHeader_iNES
 	{
 		char format[4];
@@ -16,6 +24,11 @@ namespace libnes
 		uint8_t flags9;
 		uint8_t flags10;
 		uint8_t padding[5];
+
+		bool IsNES20() const
+		{
+			return (flags7 & 0x0C) == 0x08;
+		}
 
 		uint8_t GetMapper() const
 		{
@@ -32,9 +45,15 @@ namespace libnes
 			return chrRomSize << 13;
 		}
 
-		bool IsNES20() const
+		NametableMirroring GetMirroring() const
 		{
-			return (flags7 & 0x0C) == 0x08;
+			if (READ_BIT(flags6, 3))
+				return MIRROR_NONE;
+
+			if (READ_BIT(flags6, 0))
+				return MIRROR_VERTICAL;
+			else
+				return MIRROR_HORIZONTAL;
 		}
 	};
 }
