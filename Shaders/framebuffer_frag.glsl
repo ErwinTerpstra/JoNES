@@ -9,5 +9,5 @@ void main()
 	if (fragUV.s >= 0.0 && fragUV.s <= 1.0)
     	fragColor = texture(mainTexture, fragUV.st);
     else
-    	fragColor = vec4(0, 0, 0, 1);
+    	fragColor = vec4(0, 0, 0.3, 1);
 };

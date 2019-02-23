@@ -36,7 +36,7 @@ bool App::Init()
 	emulator = new Emulator();
 	debugger = new Debugger(emulator);
 
-	window = Window::Create(1280, 720, "JoNES emulator");
+	window = Window::Create(1440, 720, "JoNES emulator");
 
 	if (!window)
 	{

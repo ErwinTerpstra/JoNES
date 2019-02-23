@@ -68,8 +68,8 @@ namespace libnes
 		void IncrementAddress();
 		void DrawScanline();
 
-		void DecodeTileSlice(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
-		void DecodeTileSlice(uint16_t address, uint8_t y, uint8_t* buffer);
+		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
+		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);
 	};
 }
 

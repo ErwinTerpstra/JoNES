@@ -144,9 +144,9 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 
 		case 0x06:
 			if (writeLSB)
-				address = (address & 0xFF00) | value;
+				addressRegister = (addressRegister & 0xFF00) | value;
 			else
-				address = (address & 0x00FF) | (value << 8);
+				addressRegister = (addressRegister & 0x00FF) | (value << 8);
 
 			writeLSB = !writeLSB;
 			break;
@@ -162,7 +162,7 @@ void PPU::PerformOAMDMA(uint8_t addressMSB)
 {
 	uint16_t address = addressMSB << 8;
 
-	for (uint8_t offset = 0; offset <= 0xFF; ++offset)
+	for (uint16_t offset = 0; offset <= 0xFF; ++offset)
 		oam[oamAddress + offset] = device->mainMemory->ReadU8(address + offset);
 }
 
@@ -195,21 +195,11 @@ void PPU::DrawScanline()
 		uint16_t nametableAddress = baseNametableAddress + nametableX + (nametableY * NES_PPU_NAMETABLE_TILES_PER_ROW);
 
 		// Determine location of tile in pattern table
-		uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
-		uint16_t patternTableAddress = basePatternTableAddress + (patternTableIndex << 4); // Pattern table tiles are 16 bytes per tile
-		
-		uint8_t tileY = y - (nametableY << 3);
 		uint8_t tileX = x - (nametableX << 3);
+		uint8_t tileY = y - (nametableY << 3);
+		uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
 
-		DecodeTileSlice(basePatternTableAddress, nametableX, nametableY, tileY, tileBuffer);
-		//DecodeTileSlice(patternTableAddress, tileY, tileBuffer);
-
-		uint32_t frameBufferOffset = (y * NES_FRAME_WIDTH + x) * 3;
-		uint8_t indexedColor = tileBuffer[tileX];
-		frameBuffer[frameBufferOffset + 0] = patternTableIndex;
-		frameBuffer[frameBufferOffset + 1] = patternTableIndex;
-		frameBuffer[frameBufferOffset + 2] = patternTableIndex;
-		continue;
+		DecodeTileSlice(basePatternTableAddress, patternTableIndex, tileY, tileBuffer);
 
 		// Compose the palette index for this tile
 		uint8_t paletteIndex = SET_BIT(tileBuffer[tileX], 4); // Set bit 4 when selecting palette index for background tiles 
@@ -247,14 +237,14 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 	}
 }
 
-void PPU::DecodeTileSlice(uint16_t address, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
 {
-	uint16_t lowerPlaneAddress = (address & 0x1000) | (row << 8) | (column << 4) | (y & 0x07);
-	return DecodeTileSlice(lowerPlaneAddress, y, buffer);
+	return DecodeTileSlice(baseAddress, (row << 3) + column, y, buffer);
 }
 
-void PPU::DecodeTileSlice(uint16_t address, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer)
 {
+	uint16_t address = baseAddress | (tileIndex << 4) | (y & 0x07);
 	uint8_t lowerPlane = device->videoMemory->ReadU8(address);
 	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);
 
