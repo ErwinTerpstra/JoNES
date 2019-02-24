@@ -33,10 +33,11 @@ namespace libnes
 		uint8_t controlBits;
 		uint8_t maskBits;
 		uint8_t oamAddress;
-		uint8_t scrollX;
-		uint8_t scrollY;
-		uint16_t addressRegister;
-		bool writeLSB;
+
+		uint16_t vramAddress;
+		uint16_t temporaryAddress;
+		uint8_t fineX;
+		bool secondWrite;
 
 		bool nmiState;
 
@@ -66,7 +67,7 @@ namespace libnes
 	private:
 
 		void IncrementAddress();
-		void DrawScanline();
+		void DrawDot(uint8_t x, uint8_t y);
 
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);

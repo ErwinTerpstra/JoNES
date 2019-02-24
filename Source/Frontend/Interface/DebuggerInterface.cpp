@@ -112,13 +112,12 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 
 void DebuggerInterface::DrawPPUWindow(bool* open)
 {
-	DecodePatternTable(patternTableLeft, NES_PPU_PATTERN0);
-	DecodePatternTable(patternTableRight, NES_PPU_PATTERN1);
-
 	ImGui::Begin("PPU debugger", open);
 
+	if (ImGui::CollapsingHeader("Pattern tables", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::Text("Pattern tables:");
+		DecodePatternTable(patternTableLeft, NES_PPU_PATTERN0);
+		DecodePatternTable(patternTableRight, NES_PPU_PATTERN1);
 
 		const float patternTableScale = 2;
 		

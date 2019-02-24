@@ -37,10 +37,10 @@ void PPU::Reset()
 	maskBits = 0;
 	oamAddress = 0;
 
-	scrollX = 0;
-	scrollY = 0;
-	addressRegister = 0;
-	writeLSB = false;
+	vramAddress = 0;
+	temporaryAddress = 0;
+	fineX = 0;
+	secondWrite = false;
 
 	nmiState = false;
 }
@@ -55,7 +55,13 @@ void PPU::Tick()
 	if (localCycle == 0)
 	{
 		if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE)
-			DrawScanline();
+		{
+			if (localCycle < 256)
+				DrawDot(localCycle, scanline);
+			
+			// TODO: increment fine X
+			// TODO: increment fine Y at dot 265
+		}
 
 		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
 	}
@@ -92,7 +98,7 @@ uint8_t PPU::ReadRegister(uint16_t address)
 
 			// Unset VBlank bit
 			statusRegister = UNSET_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
-			writeLSB = false;
+			secondWrite = false;
 			
 			return value;
 		}
@@ -102,7 +108,7 @@ uint8_t PPU::ReadRegister(uint16_t address)
 
 		case 0x07:
 		{
-			uint8_t value = device->videoMemory->ReadU8(addressRegister);
+			uint8_t value = device->videoMemory->ReadU8(vramAddress);
 			IncrementAddress();
 
 			return value;
@@ -119,6 +125,7 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 	{
 		case 0x00:
 			controlBits = value;
+			temporaryAddress = (temporaryAddress & 0xC00) | (((uint16_t) (value & 0x3)) << 10);
 			break;
 
 		case 0x01:
@@ -134,25 +141,46 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 			break;
 
 		case 0x05:
-			if (writeLSB)
-				scrollY = value;
-			else
-				scrollX = value;
+			if (secondWrite)
+			{
+				temporaryAddress &= 0x0C1F;
 
-			writeLSB = !writeLSB;
+				// Fine Y-scroll
+				temporaryAddress |= ((uint16_t) (value & 0x7)) << 12;
+
+				// Coarse Y-scroll
+				temporaryAddress |= ((uint16_t) (value >> 3)) << 5;
+			}
+			else
+			{
+				// Fine X-scroll
+				fineX = value & 0x7;
+
+				// Coarse X-scroll
+				temporaryAddress = (temporaryAddress & ~0x1F) | (value >> 3);
+			}
+
+			secondWrite = !secondWrite;
 			break;
 
 		case 0x06:
-			if (writeLSB)
-				addressRegister = (addressRegister & 0xFF00) | value;
+			if (secondWrite)
+			{
+				// Address LSB
+				temporaryAddress = (temporaryAddress & 0xFF00) | value;
+				vramAddress = temporaryAddress;
+			}
 			else
-				addressRegister = (addressRegister & 0x00FF) | (value << 8);
+			{
+				// Address MSB
+				temporaryAddress = (temporaryAddress & 0x00FF) | ((value & 0x3F) << 8);
+			}
 
-			writeLSB = !writeLSB;
+			secondWrite = !secondWrite;
 			break;
 
 		case 0x07:
-			device->videoMemory->WriteU8(addressRegister, value);
+			device->videoMemory->WriteU8(vramAddress, value);
 			IncrementAddress();
 			break;
 	}
@@ -170,49 +198,41 @@ void PPU::IncrementAddress()
 {
 	// Read the increment mode bit to check if we should increment by 32 (one row) or 1 (one column)
 	if (READ_BIT(controlBits, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
-		addressRegister += 32;
+		vramAddress += 32;
 	else
-		addressRegister += 1;
+		vramAddress += 1;
 
-	addressRegister &= 0x3FFF;
+	vramAddress &= 0x3FFF;
 }
 
-void PPU::DrawScanline()
+void PPU::DrawDot(uint8_t x, uint8_t y)
 {
 	// Read nametable and pattern table sections from the control register
 	uint16_t baseNametableAddress = NES_PPU_NAMETABLE0 | ((controlBits & 0x03) << 10);
 	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
-	uint16_t y = scanline;
 	uint8_t tileBuffer[NES_PPU_TILE_SIZE];
 
-	for (uint16_t x = 0; x < NES_FRAME_WIDTH; ++x)
-	{
-		// Determine which nametable entry to use
-		// TODO: implement scrolling
-		uint8_t nametableX = x >> 3;
-		uint8_t nametableY = y >> 3;
-		uint16_t nametableAddress = baseNametableAddress + nametableX + (nametableY * NES_PPU_NAMETABLE_TILES_PER_ROW);
+	uint16_t nametableAddress = 0x2000 | (vramAddress & 0x0FFF);
 
-		// Determine location of tile in pattern table
-		uint8_t tileX = x - (nametableX << 3);
-		uint8_t tileY = y - (nametableY << 3);
-		uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
+	// Determine location of tile in pattern table
+	uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
 
-		DecodeTileSlice(basePatternTableAddress, patternTableIndex, tileY, tileBuffer);
+	// Decode the slice containing the current pixel
+	uint8_t fineY = vramAddress >> 12;
+	DecodeTileSlice(basePatternTableAddress, patternTableIndex, fineY, tileBuffer);
 
-		// Compose the palette index for this tile
-		uint8_t paletteIndex = SET_BIT(tileBuffer[tileX], 4); // Set bit 4 when selecting palette index for background tiles 
+	// Compose the palette index for this tile
+	uint8_t paletteIndex = SET_BIT(tileBuffer[fineX], 4); // Set bit 4 when selecting palette index for background tiles 
 		
-		// TODO: attribute table bits
+	// TODO: attribute table bits
 		
-		// Read palette color
-		uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
-		uint8_t color = device->videoMemory->ReadU8(paletteAddress);
+	// Read palette color
+	uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
+	uint8_t color = device->videoMemory->ReadU8(paletteAddress);
 
-		// Decode color and write to framebuffer
-		DecodeColor(color, frameBuffer + (y * NES_FRAME_WIDTH + x) * 3);
-	}
+	// Decode color and write to framebuffer
+	DecodeColor(color, frameBuffer + (y * NES_FRAME_WIDTH + x) * 3);
 }
 
 void PPU::DecodeColor(uint8_t color, uint8_t* buffer) const
