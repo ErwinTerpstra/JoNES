@@ -8,7 +8,7 @@
 
 using namespace libnes;
 
-uint8_t NES_2C02_PALETTE_COLORS[] =
+const uint8_t NES_2C02_PALETTE_COLORS[] =
 {
 	84, 84, 84, 0, 30, 116, 8, 16, 144, 48, 0, 136, 68, 0, 100, 92, 0, 48, 84, 4, 0, 60, 24, 0, 32, 42, 0, 8, 58, 0, 0, 64, 0, 0, 60, 0, 0, 50, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	152, 150, 152, 8, 76, 196, 48, 50, 236, 92, 30, 228, 136, 20, 176, 160, 20, 100, 152, 34, 32, 120, 60, 0, 84, 90, 0, 40, 114, 0, 8, 124, 0, 0, 118, 40, 0, 102, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -42,42 +42,49 @@ void PPU::Reset()
 	fineX = 0;
 	secondWrite = false;
 
+	memset(&registers, 0, sizeof(PPU_Registers));
+
 	nmiState = false;
 }
 
 void PPU::Tick()
 {
-	++cycles;
+	// Check which dot in the current scanline to update
+	uint32_t dot = cycles % NES_PPU_CYCLES_PER_SCANLINE;
 
-	// Update scanline
-	uint32_t localCycle = cycles % NES_PPU_CYCLES_PER_SCANLINE;
-
-	if (localCycle == 0)
+	// Visible scanlines
+	if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE)
 	{
-		if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE)
-		{
-			if (localCycle < 256)
-				DrawDot(localCycle, scanline);
-			
-			// TODO: increment fine X
-			// TODO: increment fine Y at dot 265
-		}
-
-		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
+		if (dot >= 1 && dot <= 256)
+			DrawDot((uint8_t) (dot - 1), (uint8_t) scanline);
 	}
-	
+
+	// Increment coarse X each 8th dot
+	if (dot != 0 && (dot & 0x7) == 0)
+		IncrementCourseX();
+
+	if (dot == 256)
+		IncrementY(); // Increment fine Y after the last visible dot
+	else if (dot == 257)
+		ResetHorizontal(); // Reset horizontal part of VRAM address
+		
 	// Handle VBlank
-	if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE && localCycle == 1)
+	if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE && dot == 1)
 	{
 		// Set vblank bit
 		statusRegister = SET_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
 		vblankStarted.Fire();
 	}
 
-	if (scanline == NES_PPU_PRE_RENDER_SCANLINE && localCycle == 1)
+	if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
 	{
 		// Reset status flags
-		statusRegister = 0;
+		if (dot == 1)
+			statusRegister = 0;
+
+		// Reset vertical part of VRAM address
+		if (dot >= 280 && dot <= 304)
+			ResetVertical();
 	}
 
 	// Handle NMI
@@ -86,6 +93,13 @@ void PPU::Tick()
 		device->cpu->TriggerNMI();
 
 	nmiState = nmiActive;
+
+	// Increment scanline
+	if (dot == (NES_PPU_CYCLES_PER_SCANLINE - 1))
+		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
+
+	// Increment cycle count
+	++cycles;
 }
 
 uint8_t PPU::ReadRegister(uint16_t address)
@@ -205,25 +219,112 @@ void PPU::IncrementAddress()
 	vramAddress &= 0x3FFF;
 }
 
-void PPU::DrawDot(uint8_t x, uint8_t y)
+void PPU::IncrementCourseX()
 {
-	// Read nametable and pattern table sections from the control register
-	uint16_t baseNametableAddress = NES_PPU_NAMETABLE0 | ((controlBits & 0x03) << 10);
+	// Check if course X is 32 (0x1F)
+	if (READ_MASK(vramAddress, 0x1F))
+	{
+		// Reset course X
+		vramAddress = UNSET_MASK(vramAddress, 0x1F);
+		
+		// Switch horizontal nametable
+		vramAddress ^= 0x400;
+	}
+	else
+		++vramAddress;
+}
+
+void PPU::IncrementY()
+{
+	// CHeck if fine Y is 7
+	if (READ_MASK(vramAddress, 0x7000))
+	{
+		// Reset fine Y
+		vramAddress = UNSET_MASK(vramAddress, 0x7000);
+		
+		// Read coarse Y
+		uint16_t coarseY = (vramAddress & 0x03E0) >> 5;
+
+		if (coarseY == 29)
+		{
+			// Reset coarse Y
+			vramAddress = UNSET_MASK(vramAddress, 0x03E0);
+
+			// Switch vertical nametable
+			vramAddress ^= 0x0800;
+		}
+		else if (coarseY == 31)
+		{
+			// This case can happen when a program writes a value >= 240 to $2005
+
+			// Reset coarse Y
+			vramAddress = UNSET_MASK(vramAddress, 0x03E0);
+		}
+		else
+		{
+			// Increment coarse Y
+			vramAddress += 0x10;
+		}
+	}
+	else
+		vramAddress += 0x1000;
+}
+
+void PPU::ResetHorizontal()
+{
+	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0x41F);
+}
+
+void PPU::ResetVertical()
+{
+	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0x7BE0);
+}
+
+void PPU::FetchData()
+{
+	// Check which pattern table to use for the background
 	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
-	uint8_t tileBuffer[NES_PPU_TILE_SIZE];
+	// Determine nametable and attribute addresses
+	uint16_t v = vramAddress;
+	uint16_t nametableAddress = 0x2000 | (v & 0x0FFF);
+	uint16_t attributeAddress = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
 
-	uint16_t nametableAddress = 0x2000 | (vramAddress & 0x0FFF);
+	// Determine location of tile in pattern table
+	uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
+
+	// Determine the address of the tile
+	uint8_t fineY = vramAddress >> 12;
+	uint16_t patternTableAddress = basePatternTableAddress | (patternTableIndex << 4) | (fineY & 0x07);
+
+	// Read the data for the upper and lower planes
+	uint8_t lowerPlane = device->videoMemory->ReadU8(patternTableAddress);
+	uint8_t upperPlane = device->videoMemory->ReadU8(patternTableAddress | 0x08);
+
+	// Place the data in the upper 8 bits of the shift registers
+	registers.tileDataHigh = (registers.tileDataHigh & 0xFF) | (upperPlane << 8);
+	registers.tileDataLow = (registers.tileDataLow & 0xFF) | (lowerPlane << 8);
+}
+
+void PPU::DrawDot(uint8_t x, uint8_t y)
+{
+	// Check which pattern table to use for the background
+	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+
+	// Determine nametable and attribute addresses
+	uint16_t v = vramAddress;
+	uint16_t nametableAddress = 0x2000 | (v & 0x0FFF);
+	uint16_t attributeAddress = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
 
 	// Determine location of tile in pattern table
 	uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
 
 	// Decode the slice containing the current pixel
 	uint8_t fineY = vramAddress >> 12;
-	DecodeTileSlice(basePatternTableAddress, patternTableIndex, fineY, tileBuffer);
+	uint8_t paletteIndex = DecodeTilePixel(basePatternTableAddress, patternTableIndex, fineX, fineY);
 
-	// Compose the palette index for this tile
-	uint8_t paletteIndex = SET_BIT(tileBuffer[fineX], 4); // Set bit 4 when selecting palette index for background tiles 
+	// Set bit 4 when selecting palette index for background tiles 
+	paletteIndex = SET_BIT(paletteIndex, 4);
 		
 	// TODO: attribute table bits
 		
@@ -270,4 +371,13 @@ void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, ui
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
 		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
+}
+
+uint8_t PPU::DecodeTilePixel(uint16_t baseAddress, uint8_t tileIndex, uint8_t x, uint8_t y)
+{
+	uint16_t address = baseAddress | (tileIndex << 4) | (y & 0x07);
+	uint8_t lowerPlane = device->videoMemory->ReadU8(address);
+	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);
+
+	return (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
 }

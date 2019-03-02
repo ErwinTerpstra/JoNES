@@ -8,6 +8,8 @@
 
 namespace libnes
 {
+	struct Device;
+
 	struct Sprite
 	{
 		uint8_t y;
@@ -16,12 +18,16 @@ namespace libnes
 		uint8_t x;
 	};
 
-	struct Device;
-	
+	struct PPU_Registers
+	{
+		uint16_t tileDataHigh;
+		uint16_t tileDataLow;
+	};
+
 	class PPU
 	{
 	private:
-		Device* device;
+		Device * device;
 		uint8_t* frameBuffer;
 
 		uint8_t* oam;
@@ -38,6 +44,8 @@ namespace libnes
 		uint16_t temporaryAddress;
 		uint8_t fineX;
 		bool secondWrite;
+
+		PPU_Registers registers;
 
 		bool nmiState;
 
@@ -65,13 +73,22 @@ namespace libnes
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;
 		}
 	private:
-
 		void IncrementAddress();
+
+		void IncrementCourseX();
+		void IncrementY();
+		void ResetHorizontal();
+		void ResetVertical();
+
+		void FetchData();
+
 		void DrawDot(uint8_t x, uint8_t y);
 
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);
+		uint8_t DecodeTilePixel(uint16_t baseAddress, uint8_t tileIndex, uint8_t x, uint8_t y);
 	};
+
 }
 
 #endif
