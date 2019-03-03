@@ -81,12 +81,12 @@ namespace libnes
 		void ResetVertical();
 
 		void FetchData();
+		void ShiftData();
 
 		void DrawDot(uint8_t x, uint8_t y);
 
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);
-		uint8_t DecodeTilePixel(uint16_t baseAddress, uint8_t tileIndex, uint8_t x, uint8_t y);
 	};
 
 }
