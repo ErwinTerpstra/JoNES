@@ -28,7 +28,7 @@ namespace libnes
 		
 		bool GetFlag(Flags flag)
 		{
-			return READ_MASK(p, flag);
+			return TEST_MASK(p, flag);
 		}
 
 		void SetFlag(Flags flag)
@@ -49,7 +49,7 @@ namespace libnes
 		void SetZNFromResult(uint8_t result)
 		{
 			SetOrClearFlag(FLAG_ZERO, result == 0);
-			SetOrClearFlag(FLAG_NEGATIVE, READ_BIT(result, 7));
+			SetOrClearFlag(FLAG_NEGATIVE, TEST_BIT(result, 7));
 		}
 	};
 }

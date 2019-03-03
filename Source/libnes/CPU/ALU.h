@@ -57,8 +57,8 @@ namespace libnes
 			uint8_t result = registers.a + operand + carry;
 
 
-			registers.SetOrClearFlag(FLAG_CARRY, READ_BIT(DETECT_CARRY(registers.a, operand, result), 7));
-			registers.SetOrClearFlag(FLAG_OVERFLOW, READ_BIT((registers.a ^ result) & (operand ^ result), 7));
+			registers.SetOrClearFlag(FLAG_CARRY, TEST_BIT(DETECT_CARRY(registers.a, operand, result), 7));
+			registers.SetOrClearFlag(FLAG_OVERFLOW, TEST_BIT((registers.a ^ result) & (operand ^ result), 7));
 			registers.SetZNFromResult(result);
 
 			registers.a = result;
@@ -116,7 +116,7 @@ namespace libnes
 
 		uint8_t asl(Registers& registers, uint8_t operand)
 		{
-			registers.SetOrClearFlag(FLAG_CARRY, READ_BIT(operand, 7));
+			registers.SetOrClearFlag(FLAG_CARRY, TEST_BIT(operand, 7));
 
 			operand <<= 1;
 
@@ -127,7 +127,7 @@ namespace libnes
 
 		uint8_t lsr(Registers& registers, uint8_t operand)
 		{
-			registers.SetOrClearFlag(FLAG_CARRY, READ_BIT(operand, 0));
+			registers.SetOrClearFlag(FLAG_CARRY, TEST_BIT(operand, 0));
 
 			operand >>= 1;
 
@@ -138,7 +138,7 @@ namespace libnes
 
 		uint8_t rol(Registers& registers, uint8_t operand)
 		{
-			bool bit7 = READ_BIT(operand, 7);
+			bool bit7 = TEST_BIT(operand, 7);
 
 			operand = SET_BIT_IF(operand << 1, 0, registers.GetFlag(FLAG_CARRY));
 
@@ -150,7 +150,7 @@ namespace libnes
 
 		uint8_t ror(Registers& registers, uint8_t operand)
 		{
-			bool bit0 = READ_BIT(operand, 0);
+			bool bit0 = TEST_BIT(operand, 0);
 
 			operand = SET_BIT_IF(operand >> 1, 7, registers.GetFlag(FLAG_CARRY));
 

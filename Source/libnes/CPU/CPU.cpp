@@ -337,7 +337,7 @@ void CPU::ror_a(const Instruction& instruction, uint16_t operandAddress)
 void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
 {
 	Flags flag;
-	bool branchOnSet = READ_BIT(instruction.opcode, 5);
+	bool branchOnSet = TEST_BIT(instruction.opcode, 5);
 
 	// TODO: Create a look-up table for this
 	switch ((instruction.opcode >> 6) & 0x03)
@@ -416,8 +416,8 @@ void CPU::bit(const Instruction& instruction, uint16_t operandAddress)
 	uint8_t value = ReadAddressed(instruction.addressingMode, operandAddress);
 
 	registers.SetOrClearFlag(FLAG_ZERO, (registers.a & value) == 0);
-	registers.SetOrClearFlag(FLAG_OVERFLOW, READ_BIT(value, 6));
-	registers.SetOrClearFlag(FLAG_NEGATIVE, READ_BIT(value, 7));
+	registers.SetOrClearFlag(FLAG_OVERFLOW, TEST_BIT(value, 6));
+	registers.SetOrClearFlag(FLAG_NEGATIVE, TEST_BIT(value, 7));
 }
 
 void CPU::clc(const Instruction& instruction, uint16_t operandAddress)

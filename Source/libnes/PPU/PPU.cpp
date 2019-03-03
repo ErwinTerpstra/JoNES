@@ -53,35 +53,39 @@ void PPU::Tick()
 	uint32_t dot = cycles % NES_PPU_CYCLES_PER_SCANLINE;
 
 	// Draw dots on visible scanlines
-	if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE)
+	if (scanline < NES_FRAME_HEIGHT)
 	{
 		if (dot >= 1 && dot <= 256)
 			DrawDot((uint8_t)(dot - 1), (uint8_t)scanline);
 	}
 
 	// Fetch data and increment vram address
-	if (scanline < NES_PPU_VBLANK_FIRST_SCANLINE || scanline == NES_PPU_PRE_RENDER_SCANLINE)
+	if (scanline < NES_FRAME_HEIGHT || scanline == NES_PPU_PRE_RENDER_SCANLINE)
 	{
 		if ((dot >= 1 && dot <= 256) || (dot >= 321 && dot <= 336))
 		{
 			// Increment coarse X each 8th dot
 			if ((dot & 0x07) == 0)
 				IncrementCourseX();
+
+			// Increment fine Y after the last visible dot
+			if (dot == 256)
+				IncrementY();
 		}
+
+		// Reset horizontal part of VRAM addresss
+		if (dot == 257)
+			ResetHorizontal();
 
 		if ((dot >= 2 && dot <= 257) || (dot >= 322 && dot <= 337))
 		{
-			// Load new data into shift registers at the first dot of each 8 dot cycle
+			// Load new data into shift registers at the first dot of each 8-dot cycle
 			if ((dot & 0x07) == 1)
 				FetchData();
 
 			ShiftData();
 		}
 
-		if (dot == 256)
-			IncrementY(); // Increment fine Y after the last visible dot
-		else if (dot == 257)
-			ResetHorizontal(); // Reset horizontal part of VRAM address
 	}
 		
 	// Handle VBlank
@@ -105,7 +109,7 @@ void PPU::Tick()
 	}
 
 	// Handle NMI
-	bool nmiActive = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_NMI_ENABLE) && READ_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+	bool nmiActive = TEST_BIT(controlBits, NES_PPU_CONTROL_BIT_NMI_ENABLE) && TEST_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
 	if (nmiActive && !nmiState)
 		device->cpu->TriggerNMI();
 
@@ -228,7 +232,7 @@ void PPU::PerformOAMDMA(uint8_t addressMSB)
 void PPU::IncrementAddress()
 {
 	// Read the increment mode bit to check if we should increment by 32 (one row) or 1 (one column)
-	if (READ_BIT(controlBits, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
+	if (TEST_BIT(controlBits, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
 		vramAddress += 32;
 	else
 		vramAddress += 1;
@@ -239,7 +243,7 @@ void PPU::IncrementAddress()
 void PPU::IncrementCourseX()
 {
 	// Check if course X is 32 (0x1F)
-	if (READ_MASK(vramAddress, 0x1F))
+	if (TEST_MASK(vramAddress, 0x1F))
 	{
 		// Reset course X
 		vramAddress = UNSET_MASK(vramAddress, 0x1F);
@@ -254,7 +258,7 @@ void PPU::IncrementCourseX()
 void PPU::IncrementY()
 {
 	// CHeck if fine Y is 7
-	if (READ_MASK(vramAddress, 0x7000))
+	if (TEST_MASK(vramAddress, 0x7000))
 	{
 		// Reset fine Y
 		vramAddress = UNSET_MASK(vramAddress, 0x7000);
@@ -280,7 +284,7 @@ void PPU::IncrementY()
 		else
 		{
 			// Increment coarse Y
-			vramAddress += 0x10;
+			vramAddress += 0x20;
 		}
 	}
 	else
@@ -289,7 +293,7 @@ void PPU::IncrementY()
 
 void PPU::ResetHorizontal()
 {
-	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0x41F);
+	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0x041F);
 }
 
 void PPU::ResetVertical()
@@ -300,7 +304,7 @@ void PPU::ResetVertical()
 void PPU::FetchData()
 {
 	// Check which pattern table to use for the background
-	uint16_t basePatternTableAddress = READ_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+	uint16_t basePatternTableAddress = TEST_BIT(controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
 	// Determine nametable and attribute addresses
 	uint16_t v = vramAddress;
@@ -318,15 +322,15 @@ void PPU::FetchData()
 	uint8_t lowerPlane = device->videoMemory->ReadU8(patternTableAddress);
 	uint8_t upperPlane = device->videoMemory->ReadU8(patternTableAddress | 0x08);
 
-	// Place the data in the upper 8 bits of the shift registers
-	registers.tileDataHigh = (registers.tileDataHigh & 0xFF) | (upperPlane << 8);
-	registers.tileDataLow = (registers.tileDataLow & 0xFF) | (lowerPlane << 8);
+	// Place the data in the lower 8 bits of the shift registers
+	registers.tileDataLow = (registers.tileDataLow & 0xFF00) | lowerPlane;
+	registers.tileDataHigh = (registers.tileDataHigh & 0xFF00) | upperPlane;
 }
 
 void PPU::ShiftData()
 {
-	registers.tileDataHigh >>= 1;
-	registers.tileDataLow >>= 1;
+	registers.tileDataHigh <<= 1;
+	registers.tileDataLow <<= 1;
 }
 
 void PPU::DrawDot(uint8_t x, uint8_t y)
@@ -334,9 +338,9 @@ void PPU::DrawDot(uint8_t x, uint8_t y)
 	// Set bit 4 when selecting palette index for background tiles 
 	uint8_t paletteIndex = 0x10;
 
-	// Get the 0th and 1st bit of the palette index from the tile data
-	paletteIndex |= READ_BIT(registers.tileDataLow, fineX);
-	paletteIndex |= READ_BIT(registers.tileDataHigh, fineX) << 1;
+	// Get the 0th and 1st bit of the palette index from the top bit in the tile data
+	paletteIndex |= READ_BIT(registers.tileDataLow, 15 - fineX);
+	paletteIndex |= READ_BIT(registers.tileDataHigh, 15 - fineX) << 1;
 	
 	// TODO: attribute table bits
 		
@@ -382,5 +386,5 @@ void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, ui
 	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
-		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
+		buffer[x] = (TEST_BIT(upperPlane, 7 - x) << 1) | TEST_BIT(lowerPlane, 7 - x);
 }

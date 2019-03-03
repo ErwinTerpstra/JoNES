@@ -50,7 +50,7 @@ void Cartridge::WriteMain(uint16_t address, uint8_t value)
 
 uint8_t Cartridge::ReadVideo(uint16_t address) const
 {
-	if (READ_BIT(address, 13))
+	if (TEST_BIT(address, 13))
 	{
 		// Read from cartridge VRAM
 		assert(false);
@@ -62,7 +62,7 @@ uint8_t Cartridge::ReadVideo(uint16_t address) const
 
 void Cartridge::WriteVideo(uint16_t address, uint8_t value)
 {
-	if (READ_BIT(address, 13))
+	if (TEST_BIT(address, 13))
 	{
 		// Write to cartridge VRAM
 		assert(false);
@@ -75,10 +75,10 @@ bool Cartridge::GetVideoRamA10(uint16_t address) const
 	switch (header.GetMirroring())
 	{
 		case MIRROR_HORIZONTAL:
-			return READ_BIT(address, 11);
+			return TEST_BIT(address, 11);
 
 		case MIRROR_VERTICAL:
-			return READ_BIT(address, 10);
+			return TEST_BIT(address, 10);
 
 		default:
 			assert(false);
@@ -88,5 +88,5 @@ bool Cartridge::GetVideoRamA10(uint16_t address) const
 
 bool Cartridge::GetVideoRamEnabled(uint16_t address) const
 {
-	return READ_BIT(address, 13);
+	return TEST_BIT(address, 13);
 }
