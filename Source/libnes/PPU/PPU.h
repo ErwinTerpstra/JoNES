@@ -24,6 +24,14 @@ namespace libnes
 		uint16_t tileDataLow;
 	};
 
+	struct PPU_Latches
+	{
+		uint8_t nt;
+		uint8_t at;
+		uint8_t tileLow;
+		uint8_t tileHigh;
+	};
+
 	class PPU
 	{
 	private:
@@ -46,6 +54,7 @@ namespace libnes
 		bool secondWrite;
 
 		PPU_Registers registers;
+		PPU_Latches latches;
 
 		bool nmiState;
 
@@ -81,6 +90,7 @@ namespace libnes
 		void ResetVertical();
 
 		void FetchData();
+		void LoadShiftRegisters();
 		void ShiftData();
 
 		void DrawDot(uint8_t x, uint8_t y);

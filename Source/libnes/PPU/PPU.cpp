@@ -52,40 +52,43 @@ void PPU::Tick()
 	// Check which dot in the current scanline to update
 	uint32_t dot = cycles % NES_PPU_CYCLES_PER_SCANLINE;
 
-	// Draw dots on visible scanlines
-	if (scanline < NES_FRAME_HEIGHT)
-	{
-		if (dot >= 1 && dot <= 256)
-			DrawDot((uint8_t)(dot - 1), (uint8_t)scanline);
-	}
-
 	// Fetch data and increment vram address
 	if (scanline < NES_FRAME_HEIGHT || scanline == NES_PPU_PRE_RENDER_SCANLINE)
 	{
-		if ((dot >= 1 && dot <= 256) || (dot >= 321 && dot <= 336))
-		{
-			// Increment coarse X each 8th dot
-			if ((dot & 0x07) == 0)
-				IncrementCourseX();
+		uint8_t localDot = dot & 0x07;
 
-			// Increment fine Y after the last visible dot
-			if (dot == 256)
-				IncrementY();
+		if ((dot >= 2 && dot <= 257) || (dot >= 322 && dot <= 337))
+		{
+			ShiftData();
+
+			// Fetch data from memory at the last dot of each 8-dot cycle
+			if (localDot == 0)
+				FetchData();
+
+			// Load new data into shift registers at the first dot of each 8-dot cycle
+			if (localDot == 1)
+				LoadShiftRegisters();
+
+			// Increment coarse X each 8th dot
+			if (localDot == 0)
+				IncrementCourseX();
 		}
+
+		// Increment fine Y after the last visible dot
+		if (dot == 256)
+			IncrementY();
 
 		// Reset horizontal part of VRAM addresss
 		if (dot == 257)
 			ResetHorizontal();
 
-		if ((dot >= 2 && dot <= 257) || (dot >= 322 && dot <= 337))
-		{
-			// Load new data into shift registers at the first dot of each 8-dot cycle
-			if ((dot & 0x07) == 1)
-				FetchData();
+	}
 
-			ShiftData();
-		}
-
+	// Draw dots on visible scanlines
+	if (scanline < NES_FRAME_HEIGHT)
+	{
+		if (dot >= 1 && dot <= 256)
+			DrawDot((uint8_t)(dot - 1), (uint8_t)scanline);
 	}
 		
 	// Handle VBlank
@@ -159,9 +162,13 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 	switch (address & 0x07)
 	{
 		case 0x00:
+		{
 			controlBits = value;
-			temporaryAddress = (temporaryAddress & 0xC00) | (((uint16_t) (value & 0x3)) << 10);
+
+			uint16_t mask = ((value & 0x03) << 10);
+			temporaryAddress = (temporaryAddress & ~0x0C00) | mask;
 			break;
+		}
 
 		case 0x01:
 			maskBits = value;
@@ -181,15 +188,15 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 				temporaryAddress &= 0x0C1F;
 
 				// Fine Y-scroll
-				temporaryAddress |= ((uint16_t) (value & 0x7)) << 12;
+				temporaryAddress |= (value & 0x07) << 12;
 
 				// Coarse Y-scroll
-				temporaryAddress |= ((uint16_t) (value >> 3)) << 5;
+				temporaryAddress |= (value & 0xF8) << 2;
 			}
 			else
 			{
 				// Fine X-scroll
-				fineX = value & 0x7;
+				fineX = value & 0x07;
 
 				// Coarse X-scroll
 				temporaryAddress = (temporaryAddress & ~0x1F) | (value >> 3);
@@ -242,7 +249,7 @@ void PPU::IncrementAddress()
 
 void PPU::IncrementCourseX()
 {
-	// Check if course X is 32 (0x1F)
+	// Check if course X is 31 (0x1F)
 	if (TEST_MASK(vramAddress, 0x1F))
 	{
 		// Reset course X
@@ -252,7 +259,7 @@ void PPU::IncrementCourseX()
 		vramAddress ^= 0x400;
 	}
 	else
-		++vramAddress;
+		vramAddress += 0x01;
 }
 
 void PPU::IncrementY()
@@ -298,7 +305,7 @@ void PPU::ResetHorizontal()
 
 void PPU::ResetVertical()
 {
-	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0x7BE0);
+	vramAddress = COPY_MASK(vramAddress, temporaryAddress, 0xFBE0);
 }
 
 void PPU::FetchData()
@@ -319,12 +326,15 @@ void PPU::FetchData()
 	uint16_t patternTableAddress = basePatternTableAddress | (patternTableIndex << 4) | (fineY & 0x07);
 
 	// Read the data for the upper and lower planes
-	uint8_t lowerPlane = device->videoMemory->ReadU8(patternTableAddress);
-	uint8_t upperPlane = device->videoMemory->ReadU8(patternTableAddress | 0x08);
+	latches.tileLow = device->videoMemory->ReadU8(patternTableAddress);
+	latches.tileHigh = device->videoMemory->ReadU8(patternTableAddress | 0x08);
+}
 
+void PPU::LoadShiftRegisters()
+{
 	// Place the data in the lower 8 bits of the shift registers
-	registers.tileDataLow = (registers.tileDataLow & 0xFF00) | lowerPlane;
-	registers.tileDataHigh = (registers.tileDataHigh & 0xFF00) | upperPlane;
+	registers.tileDataLow = (registers.tileDataLow & 0xFF00) | latches.tileLow;
+	registers.tileDataHigh = (registers.tileDataHigh & 0xFF00) | latches.tileHigh;
 }
 
 void PPU::ShiftData()
@@ -339,8 +349,9 @@ void PPU::DrawDot(uint8_t x, uint8_t y)
 	uint8_t paletteIndex = 0x10;
 
 	// Get the 0th and 1st bit of the palette index from the top bit in the tile data
-	paletteIndex |= READ_BIT(registers.tileDataLow, 15 - fineX);
-	paletteIndex |= READ_BIT(registers.tileDataHigh, 15 - fineX) << 1;
+	uint8_t bit = 15 - fineX;
+	paletteIndex |= READ_BIT(registers.tileDataLow, bit);
+	paletteIndex |= READ_BIT(registers.tileDataHigh, bit) << 1;
 	
 	// TODO: attribute table bits
 		
@@ -386,5 +397,5 @@ void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, ui
 	uint8_t upperPlane = device->videoMemory->ReadU8(address | 0x08);
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
-		buffer[x] = (TEST_BIT(upperPlane, 7 - x) << 1) | TEST_BIT(lowerPlane, 7 - x);
+		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
 }
