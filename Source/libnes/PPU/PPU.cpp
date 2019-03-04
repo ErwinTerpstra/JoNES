@@ -81,9 +81,19 @@ void PPU::Tick()
 		// Reset horizontal part of VRAM addresss
 		if (dot == 257)
 			ResetHorizontal();
-
 	}
 
+	// Handle pre-render scanline
+	if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
+	{
+		// Reset status flags
+		if (dot == 1)
+			statusRegister = 0;
+
+		// Reset vertical part of VRAM address
+		if (dot >= 280 && dot <= 304)
+			ResetVertical();
+	}
 	// Draw dots on visible scanlines
 	if (scanline < NES_FRAME_HEIGHT)
 	{
@@ -97,18 +107,6 @@ void PPU::Tick()
 		// Set vblank bit
 		statusRegister = SET_BIT(statusRegister, NES_PPU_STATUS_BIT_VBLANK);
 		vblankStarted.Fire();
-	}
-
-	// Handle pre-render scanline
-	if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
-	{
-		// Reset status flags
-		if (dot == 1)
-			statusRegister = 0;
-
-		// Reset vertical part of VRAM address
-		if (dot >= 280 && dot <= 304)
-			ResetVertical();
 	}
 
 	// Handle NMI
