@@ -14,20 +14,28 @@ using namespace JoNES;
 
 DebuggerInterface::DebuggerInterface(Debugger* debugger) : debugger(debugger)
 {
-	patternTableLeft = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
-	patternTableRight = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
+	for (uint32_t i = 0; i < 2; ++i)
+		patternTables[i] = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
+
+	for (uint32_t i = 0; i < 4; ++i)
+		nametables[i] = new Texture(NES_PPU_NAMETABLE_WIDTH, NES_PPU_NAMETABLE_HEIGHT, false);
 
 	textureBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT * 3];
 	patternBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT];
+	frameBuffer = new uint8_t[NES_FRAME_WIDTH * NES_FRAME_HEIGHT * 3];
 }
 
 DebuggerInterface::~DebuggerInterface()
 {
+	for (uint32_t i = 0; i < 2; ++i)
+		SAFE_DELETE(patternTables[i]);
+
+	for (uint32_t i = 0; i < 4; ++i)
+		SAFE_DELETE(nametables[i]);
+
 	SAFE_DELETE_ARRAY(textureBuffer);
 	SAFE_DELETE_ARRAY(patternBuffer);
-
-	SAFE_DELETE(patternTableLeft);
-	SAFE_DELETE(patternTableRight);
+	SAFE_DELETE_ARRAY(frameBuffer);
 }
 
 void DebuggerInterface::Update(float deltaTime)
@@ -112,20 +120,36 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 
 void DebuggerInterface::DrawPPUWindow(bool* open)
 {
+	const float patternTableScale = 2;
+	const float nametableScale = 1;
+
 	ImGui::Begin("PPU debugger", open);
 
 	if (ImGui::CollapsingHeader("Pattern tables", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		DecodePatternTable(patternTableLeft, NES_PPU_PATTERN0);
-		DecodePatternTable(patternTableRight, NES_PPU_PATTERN1);
+		DecodePatternTable(patternTables[0], NES_PPU_PATTERN0);
+		DecodePatternTable(patternTables[1], NES_PPU_PATTERN1);
+				
+		for (uint32_t i = 0; i < 2; ++i)
+		{
+			ImGui::Image(patternTables[i], ImVec2(patternTables[i]->Width() * patternTableScale, patternTables[i]->Height() * patternTableScale));
+			ImGui::Separator();
+		}
 
-		const float patternTableScale = 2;
-		
-		ImGui::Image(patternTableLeft, ImVec2(patternTableLeft->Width() * patternTableScale, patternTableLeft->Height() * patternTableScale));
+	}
 
-		ImGui::Separator();
+	if (ImGui::CollapsingHeader("Nametables", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		DecodeNametable(nametables[0], NES_PPU_NAMETABLE0);
+		DecodeNametable(nametables[1], NES_PPU_NAMETABLE1);
+		DecodeNametable(nametables[2], NES_PPU_NAMETABLE2);
+		DecodeNametable(nametables[3], NES_PPU_NAMETABLE3);
 
-		ImGui::Image(patternTableRight, ImVec2(patternTableRight->Width() * patternTableScale, patternTableRight->Height() * patternTableScale));
+		for (uint32_t i = 0; i < 4; ++i)
+		{
+			ImGui::Image(nametables[i], ImVec2(nametables[i]->Width() * nametableScale, nametables[i]->Height() * nametableScale));
+			ImGui::Separator();
+		}
 	}
 
 	ImGui::End();
@@ -135,7 +159,7 @@ void DebuggerInterface::DecodePatternTable(Texture* texture, uint16_t address)
 {
 	PPU* ppu = debugger->emulator->device->ppu;
 
-	// Decode the pattern table
+	// Decode the pattern table to palette indices
 	ppu->DecodePatternTable(address, patternBuffer);
 
 	// Convert color indices to RGB
@@ -151,13 +175,22 @@ void DebuggerInterface::DecodePatternTable(Texture* texture, uint16_t address)
 			textureBuffer[pixelIndex * 3 + 0] = grayscale;
 			textureBuffer[pixelIndex * 3 + 1] = grayscale;
 			textureBuffer[pixelIndex * 3 + 2] = grayscale;
-
-			//ppu->DecodeColor(patternBuffer[index], textureBuffer + (index * 3));
 		}
 	}
 
 	// Load the new RGB data in the texture
 	texture->Load(textureBuffer);
+}
+
+void DebuggerInterface::DecodeNametable(Texture* texture, uint16_t address)
+{
+	PPU* ppu = debugger->emulator->device->ppu;
+
+	// Decode the nametable to RGB
+	ppu->DecodeNametable(address, frameBuffer);
+
+	// Load the new RGB data in the texture
+	texture->Load(frameBuffer);
 }
 
 void DebuggerInterface::DrawRegisters()

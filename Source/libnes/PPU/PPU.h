@@ -22,12 +22,24 @@ namespace libnes
 	{
 		uint16_t tileDataHigh;
 		uint16_t tileDataLow;
+		uint8_t attributeHigh;
+		uint8_t attributeLow;
+
+		uint8_t statusRegister;
+		uint8_t controlBits;
+		uint8_t maskBits;
+		uint8_t oamAddress;
+
+		uint16_t vramAddress;
+		uint16_t temporaryAddress;
+		uint8_t fineX;
+		bool secondWrite;
 	};
 
 	struct PPU_Latches
 	{
-		uint8_t nt;
-		uint8_t at;
+		uint8_t nametable;
+		uint8_t attribute;
 		uint8_t tileLow;
 		uint8_t tileHigh;
 	};
@@ -42,17 +54,7 @@ namespace libnes
 
 		uint64_t cycles;
 		uint16_t scanline;
-
-		uint8_t statusRegister;
-		uint8_t controlBits;
-		uint8_t maskBits;
-		uint8_t oamAddress;
-
-		uint16_t vramAddress;
-		uint16_t temporaryAddress;
-		uint8_t fineX;
-		bool secondWrite;
-
+		
 		PPU_Registers registers;
 		PPU_Latches latches;
 
@@ -76,6 +78,7 @@ namespace libnes
 
 		void DecodeColor(uint8_t color, uint8_t* buffer) const;
 		void DecodePatternTable(uint16_t address, uint8_t* buffer);
+		void DecodeNametable(uint16_t address, uint8_t* buffer);
 
 		uint64_t MasterClockCycles() const
 		{
