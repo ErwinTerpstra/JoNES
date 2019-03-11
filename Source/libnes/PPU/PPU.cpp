@@ -81,12 +81,13 @@ void PPU::Tick()
 				ResetHorizontal();
 		}
 
-		// Draw dots on visible scanlines
-		if (scanline < NES_FRAME_HEIGHT)
-		{
-			if (dot >= 1 && dot <= 256)
-				DrawDot((uint8_t)(dot - 1), (uint8_t)scanline);
-		}
+	}
+
+	// Draw dots on visible scanlines
+	if (scanline < NES_FRAME_HEIGHT)
+	{
+		if (dot >= 1 && dot <= 256)
+			DrawDot((uint8_t)(dot - 1), (uint8_t)scanline, drawBackground, drawSprites);
 	}
 		
 	// Handle VBlank
@@ -367,23 +368,30 @@ void PPU::ShiftData()
 	registers.attributeHigh |= READ_BIT(latches.attribute, 1);
 }
 
-void PPU::DrawDot(uint8_t x, uint8_t y)
+void PPU::DrawDot(uint8_t x, uint8_t y, bool background, bool sprites)
 {
-	uint8_t tileBit = 15 - registers.fineX;
-	uint8_t attributeBit = 7 - registers.fineX;
+	uint8_t color;
 
-	// Get bit 0 & 1 of the palette index from the top bit in the tile data
-	uint8_t paletteIndex = 0;
-	paletteIndex |= READ_BIT(registers.tileDataLow, tileBit) << 0;
-	paletteIndex |= READ_BIT(registers.tileDataHigh, tileBit) << 1;
+	if (background || sprites)
+	{
+		uint8_t tileBit = 15 - registers.fineX;
+		uint8_t attributeBit = 7 - registers.fineX;
 
-	// Get bit 2 & 3 of the palette index from the attribute data
-	paletteIndex |= READ_BIT(registers.attributeLow, attributeBit) << 2;
-	paletteIndex |= READ_BIT(registers.attributeHigh, attributeBit) << 3;
-			
-	// Read palette color
-	uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
-	uint8_t color = device->videoMemory->ReadU8(paletteAddress);
+		// Get bit 0 & 1 of the palette index from the top bit in the tile data
+		uint8_t paletteIndex = 0;
+		paletteIndex |= READ_BIT(registers.tileDataLow, tileBit) << 0;
+		paletteIndex |= READ_BIT(registers.tileDataHigh, tileBit) << 1;
+
+		// Get bit 2 & 3 of the palette index from the attribute data
+		paletteIndex |= READ_BIT(registers.attributeLow, attributeBit) << 2;
+		paletteIndex |= READ_BIT(registers.attributeHigh, attributeBit) << 3;
+
+		// Read palette color
+		uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
+		color = device->videoMemory->ReadU8(paletteAddress);
+	}
+	else
+		color = device->videoMemory->ReadU8(NES_PPU_PALETTE_RAM);
 
 	// Decode color and write to framebuffer
 	DecodeColor(color, frameBuffer + (y * NES_FRAME_WIDTH + x) * 3);

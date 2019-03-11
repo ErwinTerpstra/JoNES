@@ -70,7 +70,7 @@ void Cartridge::WriteVideo(uint16_t address, uint8_t value)
 	}
 }
 
-bool Cartridge::GetVideoRamA10(uint16_t address) const
+bool Cartridge::GetInternalVideoRamA10(uint16_t address) const
 {
 	switch (header.GetMirroring())
 	{
@@ -86,7 +86,7 @@ bool Cartridge::GetVideoRamA10(uint16_t address) const
 	}
 }
 
-bool Cartridge::GetVideoRamEnabled(uint16_t address) const
+bool Cartridge::GetInternalVideoRamEnabled(uint16_t address) const
 {
 	return TEST_BIT(address, 13);
 }

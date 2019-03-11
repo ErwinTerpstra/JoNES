@@ -30,8 +30,8 @@ namespace libnes
 		uint8_t ReadVideo(uint16_t address) const;
 		void WriteVideo(uint16_t address, uint8_t value);
 
-		bool GetVideoRamA10(uint16_t address) const;
-		bool GetVideoRamEnabled(uint16_t address) const;
+		bool GetInternalVideoRamA10(uint16_t address) const;
+		bool GetInternalVideoRamEnabled(uint16_t address) const;
 	};
 }
 

@@ -12,6 +12,9 @@ VideoMemory::VideoMemory(Device* device) : device(device)
 {
 	ram = new uint8_t[NES_PPU_RAM_SIZE];
 	paletteRam = new uint8_t[NES_PPU_PALETTE_RAM_SIZE];
+
+	memset(ram, 0, NES_PPU_RAM_SIZE);
+	memset(paletteRam, 0, NES_PPU_PALETTE_RAM_SIZE);
 }
 
 VideoMemory::~VideoMemory()
@@ -26,10 +29,10 @@ uint8_t VideoMemory::Read(uint16_t address)
 
 	if (address < 0x3F00)
 	{
-		if (device->cartridge->GetVideoRamEnabled(address))
+		if (device->cartridge->GetInternalVideoRamEnabled(address))
 		{
 			uint16_t ramAddress = address & NES_PPU_RAM_ADDRESS_MASK;
-			ramAddress = SET_BIT_IF(ramAddress, 10, device->cartridge->GetVideoRamA10(address));
+			ramAddress = SET_BIT_IF(ramAddress, 10, device->cartridge->GetInternalVideoRamA10(address));
 
 			return ram[ramAddress];
 		}
@@ -38,7 +41,7 @@ uint8_t VideoMemory::Read(uint16_t address)
 
 	}
 	else
-		return paletteRam[address & NES_PPU_PALETTE_RAM_ADDRESS_MASK];
+		return paletteRam[MapPaletteAddress(address)];
 }
 
 void VideoMemory::Write(uint16_t address, uint8_t value)
@@ -47,10 +50,10 @@ void VideoMemory::Write(uint16_t address, uint8_t value)
 
 	if (address < 0x3F00)
 	{
-		if (device->cartridge->GetVideoRamEnabled(address))
+		if (device->cartridge->GetInternalVideoRamEnabled(address))
 		{
 			uint16_t ramAddress = address & NES_PPU_RAM_ADDRESS_MASK;
-			ramAddress = SET_BIT_IF(ramAddress, 10, device->cartridge->GetVideoRamA10(address));
+			ramAddress = SET_BIT_IF(ramAddress, 10, device->cartridge->GetInternalVideoRamA10(address));
 
 			ram[ramAddress] = value;
 		}
@@ -58,5 +61,15 @@ void VideoMemory::Write(uint16_t address, uint8_t value)
 			device->cartridge->WriteVideo(address, value);
 	}
 	else
-		paletteRam[address & NES_PPU_PALETTE_RAM_ADDRESS_MASK] = value;
+		paletteRam[MapPaletteAddress(address)] = value;
+}
+
+uint16_t VideoMemory::MapPaletteAddress(uint16_t address) const
+{
+	address &= NES_PPU_PALETTE_RAM_ADDRESS_MASK;
+
+	if ((address & 0x03) == 0x00)
+		address = UNSET_BIT(address, 4);
+
+	return address;
 }

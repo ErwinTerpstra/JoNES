@@ -96,7 +96,7 @@ namespace libnes
 		void LoadShiftRegisters();
 		void ShiftData();
 
-		void DrawDot(uint8_t x, uint8_t y);
+		void DrawDot(uint8_t x, uint8_t y, bool background, bool sprites);
 
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
 		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);
