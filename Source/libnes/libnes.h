@@ -18,6 +18,7 @@
 #include "Memory/MemoryBus.h"
 #include "Memory/MainMemory.h"
 #include "Memory/MemoryInterface.h"
+#include "Memory/MemoryProxy.h"
 
 #include "Debugger/Debugger.h"
 

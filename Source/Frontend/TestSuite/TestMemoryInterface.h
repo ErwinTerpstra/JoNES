@@ -6,26 +6,13 @@
 
 namespace JoNES
 {
-	class TestMemoryInterface : public libnes::MemoryInterface
+	class TestMemoryInterface : public libnes::MemoryProxy
 	{
-	private:
-		libnes::MemoryInterface* next;
-
 	public:
 
-		TestMemoryInterface(libnes::MemoryInterface* next) : next(next)
+		TestMemoryInterface(libnes::MemoryBus* bus) : MemoryProxy(bus)
 		{
 
-		}
-
-		~TestMemoryInterface()
-		{
-
-		}
-
-		uint8_t Read(uint16_t address)
-		{
-			return next->Read(address);
 		}
 
 		void Write(uint16_t address, uint8_t value)
@@ -33,7 +20,7 @@ namespace JoNES
 			if (address == 0x02 || address == 0x03)
 				Debug::Print("[nestest]: 0x%4X: 0x%2X\n", address, value);
 
-			next->Write(address, value);
+			MemoryProxy::Write(address, value);
 		}
 
 

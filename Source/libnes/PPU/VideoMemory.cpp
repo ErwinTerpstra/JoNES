@@ -44,6 +44,27 @@ uint8_t VideoMemory::Read(uint16_t address)
 		return paletteRam[MapPaletteAddress(address)];
 }
 
+uint8_t VideoMemory::Peek(uint16_t address) const
+{
+	address &= 0x3FFF;
+
+	if (address < 0x3F00)
+	{
+		if (device->cartridge->GetInternalVideoRamEnabled(address))
+		{
+			uint16_t ramAddress = address & NES_PPU_RAM_ADDRESS_MASK;
+			ramAddress = SET_BIT_IF(ramAddress, 10, device->cartridge->GetInternalVideoRamA10(address));
+
+			return ram[ramAddress];
+		}
+		else
+			return device->cartridge->PeekVideo(address);
+
+	}
+	else
+		return paletteRam[MapPaletteAddress(address)];
+}
+
 void VideoMemory::Write(uint16_t address, uint8_t value)
 {
 	address &= 0x3FFF;

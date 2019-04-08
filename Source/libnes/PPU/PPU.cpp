@@ -18,12 +18,14 @@ const uint8_t NES_2C02_PALETTE_COLORS[] =
 
 PPU::PPU(Device* device, uint8_t* frameBuffer) : device(device), frameBuffer(frameBuffer)
 {
-	oam = new uint8_t[NES_PPU_OAM_SIZE];
+	primaryOAM = new uint8_t[NES_PPU_PRIMARY_OAM_SIZE];
+	secondaryOAM = new uint8_t[NES_PPU_PRIMARY_OAM_SIZE];
 }
 
 PPU::~PPU()
 {
-	SAFE_DELETE_ARRAY(oam);
+	SAFE_DELETE_ARRAY(primaryOAM);
+	SAFE_DELETE_ARRAY(secondaryOAM);
 }
 
 
@@ -43,8 +45,9 @@ void PPU::Tick()
 	// Check which dot in the current scanline to update
 	uint32_t dot = cycles % NES_PPU_CYCLES_PER_SCANLINE;
 
-	bool drawBackground = READ_BIT(registers.maskBits, NES_PPU_MASK_BIT_BACKGROUND);
-	bool drawSprites = READ_BIT(registers.maskBits, NES_PPU_MASK_BIT_SPRITES);
+	bool col0 = dot <= 8;
+	bool drawBackground = TEST_BIT(registers.mask, NES_PPU_MASK_BIT_BACKGROUND) && (!col0 || TEST_BIT(registers.mask, NES_PPU_MASK_BIT_COL0_BACKGROUND));
+	bool drawSprites = TEST_BIT(registers.mask, NES_PPU_MASK_BIT_SPRITES) && (!col0|| TEST_BIT(registers.mask, NES_PPU_MASK_BIT_COL0_SPRITES));
 
 	if (drawBackground || drawSprites)
 	{
@@ -55,13 +58,13 @@ void PPU::Tick()
 
 			if ((dot >= 2 && dot <= 257) || (dot >= 322 && dot <= 337))
 			{
-				ShiftData();
+				ShiftBackgroundData();
 
 				// Fetch data from memory at the last dot of each 8-dot cycle
 				if (localDot == 0)
 				{
 					// Load new data into the data latches
-					FetchData();
+					FetchBackgroundData();
 
 					// After fetching, increment course X
 					IncrementCourseX();
@@ -80,21 +83,31 @@ void PPU::Tick()
 			if (dot == 257)
 				ResetHorizontal();
 		}
-
 	}
 
-	// Draw dots on visible scanlines
 	if (scanline < NES_FRAME_HEIGHT)
 	{
+		// Draw dots on visible scanlines
 		if (dot >= 1 && dot <= 256)
+		{
 			DrawDot((uint8_t)(dot - 1), (uint8_t)scanline, drawBackground, drawSprites);
+			ShiftSpriteData();
+		}
+
+		// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
+		if (dot == 256)
+			EvaluateSprites();
+
+		// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
+		if (dot == 320)
+			FetchSpriteData();
 	}
 		
 	// Handle VBlank
 	if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE && dot == 1)
 	{
 		// Set vblank bit
-		registers.statusRegister = SET_BIT(registers.statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+		registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
 		vblankStarted.Fire();
 	}
 
@@ -103,7 +116,7 @@ void PPU::Tick()
 	{
 		// Reset status flags
 		if (dot == 1)
-			registers.statusRegister = 0;
+			registers.status = 0;
 
 		// Reset vertical part of VRAM address
 		if (dot >= 280 && dot <= 304)
@@ -111,7 +124,7 @@ void PPU::Tick()
 	}
 
 	// Handle NMI
-	bool nmiActive = TEST_BIT(registers.controlBits, NES_PPU_CONTROL_BIT_NMI_ENABLE) && TEST_BIT(registers.statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+	bool nmiActive = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_NMI_ENABLE) && TEST_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
 	if (nmiActive && !nmiState)
 		device->cpu->TriggerNMI();
 
@@ -131,17 +144,17 @@ uint8_t PPU::ReadRegister(uint16_t address)
 	{
 		case 0x02:
 		{
-			uint8_t value = registers.statusRegister;
+			uint8_t value = registers.status;
 
 			// Unset VBlank bit
-			registers.statusRegister = UNSET_BIT(registers.statusRegister, NES_PPU_STATUS_BIT_VBLANK);
+			registers.status = UNSET_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
 			registers.secondWrite = false;
 			
 			return value;
 		}
 
 		case 0x04:
-			return oam[registers.oamAddress];
+			return primaryOAM[registers.oamAddress];
 
 		case 0x07:
 		{
@@ -156,13 +169,31 @@ uint8_t PPU::ReadRegister(uint16_t address)
 	}
 }
 
+uint8_t PPU::PeekRegister(uint16_t address) const
+{
+	switch (address & 0x07)
+	{
+	case 0x02:
+		return registers.status;
+
+	case 0x04:
+		return primaryOAM[registers.oamAddress];
+
+	case 0x07:
+		return device->videoMemory->ReadU8(registers.vramAddress);
+
+	default:
+		return 0;
+	}
+}
+
 void PPU::WriteRegister(uint16_t address, uint8_t value)
 {
 	switch (address & 0x07)
 	{
 		case 0x00:
 		{
-			registers.controlBits = value;
+			registers.control = value;
 
 			uint16_t mask = ((value & 0x03) << 10);
 			registers.temporaryAddress = (registers.temporaryAddress & ~0x0C00) | mask;
@@ -170,7 +201,7 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 		}
 
 		case 0x01:
-			registers.maskBits = value;
+			registers.mask = value;
 			break;
 
 		case 0x03:
@@ -178,7 +209,7 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 			break;
 
 		case 0x04:
-			oam[registers.oamAddress] = value;
+			primaryOAM[registers.oamAddress] = value;
 			++registers.oamAddress;
 			break;
 
@@ -233,13 +264,141 @@ void PPU::PerformOAMDMA(uint8_t addressMSB)
 	uint16_t address = addressMSB << 8;
 
 	for (uint16_t offset = 0; offset <= 0xFF; ++offset)
-		oam[registers.oamAddress + offset] = device->mainMemory->ReadU8(address + offset);
+		primaryOAM[registers.oamAddress + offset] = device->mainMemory->ReadU8(address + offset);
+}
+
+void PPU::EvaluateSprites()
+{
+	// Clear secondary OAM
+	memset(&secondaryOAM[0], 0xFF, NES_PPU_SECONDARY_OAM_SIZE);
+
+	uint8_t spriteHeight = NES_PPU_TILE_SIZE << (READ_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_HEIGHT));
+
+	uint8_t n = 0;
+	uint8_t foundSprites = 0;
+	while (n < NES_PPU_PRIMARY_OAM_SPRITES && foundSprites < NES_PPU_SECONDARY_OAM_SPRITES)
+	{
+		// Get a pointer to the sprite data
+		Sprite* sprite = reinterpret_cast<Sprite*>(primaryOAM + (n * NES_PPU_SPRITE_SIZE));
+
+		// Check if the sprite is in range on this scanline
+		if (scanline >= sprite->y && scanline < sprite->y + spriteHeight)
+		{
+			// Copy the sprite into secondary oam
+			memcpy(secondaryOAM + (foundSprites * NES_PPU_SPRITE_SIZE), sprite, NES_PPU_SPRITE_SIZE);
+			++foundSprites;
+		}
+
+		n = n + 1;
+	}
+
+	// Continue scanning the OAM for sprites that will not be renderered
+	// If they are present, set the sprite overflow flag in the status register
+	uint8_t m = 0;
+	while (n < NES_PPU_PRIMARY_OAM_SPRITES)
+	{
+		uint8_t y = primaryOAM[(n * NES_PPU_SPRITE_SIZE) + m];
+		if (scanline >= y && scanline < y + spriteHeight)
+			registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_SPRITE_OVERFLOW);
+		else
+			m = (m + 1) & 0x03; // Sprite overflow bug
+
+		n = (n + 1);
+	}
+
+}
+
+void PPU::FetchSpriteData()
+{
+	bool doubleHeight = READ_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_HEIGHT);
+
+	uint16_t basePatternTableAddress;
+
+	if (!doubleHeight)
+		basePatternTableAddress = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+
+	for (uint8_t n = 0; n < NES_PPU_SECONDARY_OAM_SPRITES; ++n)
+	{
+		Sprite* sprite = reinterpret_cast<Sprite*>(secondaryOAM + n * NES_PPU_SPRITE_SIZE);
+		PPU_SpriteRegister& spriteRegister = registers.sprites[n];
+		
+		// Copy sprite data
+		spriteRegister.attributes = sprite->attributes;
+		spriteRegister.x = sprite->x;
+
+		// Sprites at Y are either not visible or not selected during sprite evaluation
+		if (sprite->y == 0xFF)
+		{
+			spriteRegister.tileDataLow = 0x00;
+			spriteRegister.tileDataHigh = 0x00;
+			continue;
+		}
+
+		uint8_t fineY = scanline - sprite->y;
+
+		// Determine which tile index should be used
+		uint8_t tileIndex;
+		if (doubleHeight)
+		{
+			// For 8x16 sprites, the pattern table is determined by bit 0 of the tile index
+			basePatternTableAddress = TEST_BIT(sprite->tileIdx, 0) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+
+			// Clear bit 0 of the tile index
+			tileIndex = UNSET_BIT(sprite->tileIdx, 0);
+
+			// Select the odd tile index for lower part of 8x16 sprites
+			tileIndex |= READ_BIT(fineY, 3);
+
+			fineY &= 0x07;
+		}
+		else
+			tileIndex = sprite->tileIdx;
+
+		// Fetch tile data
+		uint16_t address = basePatternTableAddress | (tileIndex << 4) | fineY;
+		spriteRegister.tileDataLow = device->videoMemory->ReadU8(address);
+		spriteRegister.tileDataHigh = device->videoMemory->ReadU8(address | 0x08);
+	}
+}
+
+void PPU::ShiftSpriteData()
+{
+	for (uint8_t n = 0; n < NES_PPU_SECONDARY_OAM_SPRITES; ++n)
+	{
+		PPU_SpriteRegister& spriteRegister = registers.sprites[n];
+
+		if (spriteRegister.x == 0)
+		{
+			spriteRegister.tileDataHigh <<= 1;
+			spriteRegister.tileDataLow <<= 1;
+		}
+		else
+			--spriteRegister.x;
+	}
+}
+
+uint8_t PPU::SelectSprite()
+{
+	// Return the index of the first sprite with a non-opaque pixel
+	for (uint8_t n = 0; n < NES_PPU_SECONDARY_OAM_SPRITES; ++n)
+	{
+		PPU_SpriteRegister& spriteRegister = registers.sprites[n];
+
+		if (spriteRegister.x != 0)
+			continue;
+
+		// If the tile data is non-zero, the pixel is opaque
+		if (READ_BIT(spriteRegister.tileDataLow, 7) != 0 || READ_BIT(spriteRegister.tileDataHigh, 7) != 0)
+			return n;
+	}
+
+	return NES_PPU_SECONDARY_OAM_SPRITES;
 }
 
 void PPU::IncrementAddress()
 {
 	// Read the increment mode bit to check if we should increment by 32 (one row) or 1 (one column)
-	if (TEST_BIT(registers.controlBits, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
+	if (TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_INCREMENT_MODE))
 		registers.vramAddress += 32;
 	else
 		registers.vramAddress += 1;
@@ -314,10 +473,10 @@ void PPU::ResetVertical()
 	registers.vramAddress = COPY_MASK(registers.vramAddress, registers.temporaryAddress, 0xFBE0);
 }
 
-void PPU::FetchData()
+void PPU::FetchBackgroundData()
 {
 	// Check which pattern table to use for the background
-	uint16_t basePatternTableAddress = TEST_BIT(registers.controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+	uint16_t basePatternTableAddress = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
 	// Determine nametable and attribute addresses
 	uint16_t v = registers.vramAddress;
@@ -353,7 +512,7 @@ void PPU::LoadShiftRegisters()
 	registers.tileDataHigh = (registers.tileDataHigh & 0xFF00) | latches.tileHigh;
 }
 
-void PPU::ShiftData()
+void PPU::ShiftBackgroundData()
 {
 	// Shift tile data registers
 	registers.tileDataLow <<= 1;
@@ -374,18 +533,65 @@ void PPU::DrawDot(uint8_t x, uint8_t y, bool background, bool sprites)
 
 	if (background || sprites)
 	{
-		uint8_t tileBit = 15 - registers.fineX;
-		uint8_t attributeBit = 7 - registers.fineX;
+		// Get background tile data
+		uint8_t backgroundTileData = 0;
 
-		// Get bit 0 & 1 of the palette index from the top bit in the tile data
-		uint8_t paletteIndex = 0;
-		paletteIndex |= READ_BIT(registers.tileDataLow, tileBit) << 0;
-		paletteIndex |= READ_BIT(registers.tileDataHigh, tileBit) << 1;
+		if (background)
+		{
+			uint8_t tileBit = 15 - registers.fineX;
 
-		// Get bit 2 & 3 of the palette index from the attribute data
-		paletteIndex |= READ_BIT(registers.attributeLow, attributeBit) << 2;
-		paletteIndex |= READ_BIT(registers.attributeHigh, attributeBit) << 3;
+			// Get bit 0 & 1 of the palette index from the top bit in the tile data
+			backgroundTileData |= READ_BIT(registers.tileDataLow, tileBit) << 0;
+			backgroundTileData |= READ_BIT(registers.tileDataHigh, tileBit) << 1;
+		}
 
+		// Get sprite tile data
+		uint8_t spriteTileData = 0;
+		uint8_t spritePriority = 1;
+
+		uint8_t spriteIndex = SelectSprite();
+
+		if (sprites && spriteIndex < NES_PPU_SECONDARY_OAM_SPRITES)
+		{
+			PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
+
+			// Get bit 0 & 1
+			spriteTileData |= READ_BIT(spriteRegister.tileDataLow, 7) << 0;
+			spriteTileData |= READ_BIT(spriteRegister.tileDataHigh, 7) << 1;
+
+			// Read the priority bit from the sprite attributes
+			spritePriority = READ_BIT(spriteRegister.attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_PRIORITY);
+		}
+		
+		// Determine background/sprite priority
+		uint8_t paletteIndex;
+		if (spriteTileData != 0 && (backgroundTileData == 0 || spritePriority == 0))
+		{
+			PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
+
+			// Bit 0 & 1 come from the tile data
+			paletteIndex = spriteTileData;
+
+			// Bit 2 & 3 come from the sprite attributes
+			paletteIndex |= (spriteRegister.attributes & 0x03) << 2;
+
+			// Bit 4 is set for sprites
+			paletteIndex = SET_BIT(paletteIndex, 4);
+		}
+		else if (backgroundTileData != 0)
+		{
+			// Bit 0 & 1 come from the tile data
+			paletteIndex = backgroundTileData;
+
+			uint8_t attributeBit = 7 - registers.fineX;
+
+			// Get bit 2 & 3 of the palette index from the attribute data
+			paletteIndex |= READ_BIT(registers.attributeLow, attributeBit) << 2;
+			paletteIndex |= READ_BIT(registers.attributeHigh, attributeBit) << 3;
+		}
+		else
+			paletteIndex = 0;
+						
 		// Read palette color
 		uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
 		color = device->videoMemory->ReadU8(paletteAddress);
@@ -422,7 +628,7 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
 {
 	// Check which pattern table to use for the background
-	uint16_t basePatternTableAddress = TEST_BIT(registers.controlBits, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+	uint16_t basePatternTableAddress = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
 
 	for (uint8_t coarseY = 0; coarseY < NES_PPU_NAMETABLE_TILES_PER_COLUMN; ++coarseY)
 	{
@@ -453,9 +659,12 @@ void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
 
 				for (uint8_t fineX = 0; fineX < NES_PPU_TILE_SIZE; ++fineX)
 				{
-					// Set bit 4 when selecting palette index for background tiles 
+					// Read the tile data
 					uint8_t paletteIndex = tileBuffer[fineX];
-					paletteIndex |= attributeBits;
+
+					// Add the attribute table bits, but only if the tile data is non-zero
+					if (paletteIndex != 0)
+						paletteIndex |= attributeBits;
 
 					// Read palette color
 					uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;

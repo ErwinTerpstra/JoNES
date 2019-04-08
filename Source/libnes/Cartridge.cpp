@@ -29,7 +29,12 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 	memcpy(chrRom, chrRomSrc, chrRomSize);
 }
 
-uint8_t Cartridge::ReadMain(uint16_t address) const
+uint8_t Cartridge::ReadMain(uint16_t address)
+{
+	return PeekMain(address);
+}
+
+uint8_t Cartridge::PeekMain(uint16_t address) const
 {
 	assert(address >= 0x6000);
 
@@ -43,12 +48,18 @@ uint8_t Cartridge::ReadMain(uint16_t address) const
 	return prgRom[(address - 0x8000) % prgRomSize];
 }
 
+
 void Cartridge::WriteMain(uint16_t address, uint8_t value)
 {
 
 }
 
-uint8_t Cartridge::ReadVideo(uint16_t address) const
+uint8_t Cartridge::ReadVideo(uint16_t address)
+{
+	return PeekVideo(address);
+}
+
+uint8_t Cartridge::PeekVideo(uint16_t address) const
 {
 	if (TEST_BIT(address, 13))
 	{

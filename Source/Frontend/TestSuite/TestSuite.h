@@ -8,11 +8,14 @@ namespace libnes
 
 namespace JoNES
 {
-	
+	class TestMemoryInterface;
+
 	class TestSuite
 	{
 	private:
 		libnes::Emulator* emulator;
+
+		TestMemoryInterface* memoryProxy;
 
 	public:
 		TestSuite(libnes::Emulator* emulator);

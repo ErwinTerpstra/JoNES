@@ -18,6 +18,14 @@ namespace libnes
 		uint8_t x;
 	};
 
+	struct PPU_SpriteRegister
+	{
+		uint8_t tileDataHigh;
+		uint8_t tileDataLow;
+		uint8_t attributes;
+		uint8_t x;
+	};
+
 	struct PPU_Registers
 	{
 		uint16_t tileDataHigh;
@@ -25,15 +33,17 @@ namespace libnes
 		uint8_t attributeHigh;
 		uint8_t attributeLow;
 
-		uint8_t statusRegister;
-		uint8_t controlBits;
-		uint8_t maskBits;
+		uint8_t status;
+		uint8_t control;
+		uint8_t mask;
 		uint8_t oamAddress;
 
 		uint16_t vramAddress;
 		uint16_t temporaryAddress;
 		uint8_t fineX;
 		bool secondWrite;
+
+		PPU_SpriteRegister sprites[NES_PPU_SECONDARY_OAM_SPRITES];
 	};
 
 	struct PPU_Latches
@@ -50,7 +60,8 @@ namespace libnes
 		Device * device;
 		uint8_t* frameBuffer;
 
-		uint8_t* oam;
+		uint8_t* primaryOAM;
+		uint8_t* secondaryOAM;
 
 		uint64_t cycles;
 		uint16_t scanline;
@@ -72,6 +83,7 @@ namespace libnes
 		void Tick();
 
 		uint8_t ReadRegister(uint16_t address);
+		uint8_t PeekRegister(uint16_t address) const;
 		void WriteRegister(uint16_t address, uint8_t value);
 
 		void PerformOAMDMA(uint8_t addressMSB);
@@ -84,7 +96,19 @@ namespace libnes
 		{
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;
 		}
+
+		uint16_t Scanline() const
+		{
+			return scanline;
+		}
+
+		const PPU_Registers& GetRegisters() const { return registers; }
 	private:
+		void EvaluateSprites();
+		void FetchSpriteData();
+		void ShiftSpriteData();
+		uint8_t SelectSprite();
+
 		void IncrementAddress();
 
 		void IncrementCourseX();
@@ -92,9 +116,9 @@ namespace libnes
 		void ResetHorizontal();
 		void ResetVertical();
 
-		void FetchData();
+		void FetchBackgroundData();
 		void LoadShiftRegisters();
-		void ShiftData();
+		void ShiftBackgroundData();
 
 		void DrawDot(uint8_t x, uint8_t y, bool background, bool sprites);
 

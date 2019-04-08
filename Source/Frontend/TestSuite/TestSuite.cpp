@@ -12,14 +12,12 @@ using namespace JoNES;
 
 TestSuite::TestSuite(Emulator* emulator) : emulator(emulator)
 {
-	// Install our memory interface
-	emulator->device->mainMemory->InstallProxy<TestMemoryInterface>();
+	memoryProxy = new TestMemoryInterface(emulator->device->mainMemory);
 }
 
 TestSuite::~TestSuite()
 {
-	// Uninstall the memory interface
-	emulator->device->mainMemory->UninstallProxy();
+	SAFE_DELETE(memoryProxy);
 }
 
 void TestSuite::RunAutomated(const char* logFileName)

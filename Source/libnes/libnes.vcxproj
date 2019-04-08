@@ -125,6 +125,8 @@
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\Instruction.h" />
     <ClInclude Include="CPU\Registers.h" />
+    <ClInclude Include="Debugger\DebuggerMemoryInterface.h" />
+    <ClInclude Include="Memory\MemoryProxy.h" />
     <ClInclude Include="PPU\PPU.h" />
     <ClInclude Include="PPU\VideoMemory.h" />
     <ClInclude Include="Util\Event.h" />

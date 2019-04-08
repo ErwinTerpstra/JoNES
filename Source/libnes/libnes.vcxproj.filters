@@ -78,6 +78,12 @@
     <ClInclude Include="Util\Event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Debugger\DebuggerMemoryInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\MemoryProxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Emulator.cpp">

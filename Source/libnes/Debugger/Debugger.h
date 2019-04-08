@@ -8,11 +8,19 @@
 namespace libnes
 {
 	class Emulator;
+	class DebuggerMemoryInterface;
+
+	struct MemoryBreakpoint
+	{
+		uint16_t address;
+		bool read, write;
+	};
 
 	class Debugger
 	{
 	private:
-		const uint8_t MAX_BREAKPOINTS = 64;
+		DebuggerMemoryInterface* mainMemoryProxy;
+		DebuggerMemoryInterface* videoMemoryProxy;
 
 		bool paused;
 
@@ -20,12 +28,15 @@ namespace libnes
 		float emulatorTime;
 
 	public:
-		Emulator * emulator;
+		Emulator* emulator;
 
 		Vector<uint16_t> breakpoints;
+		Vector<MemoryBreakpoint> mainMemoryBreakpoints;
+		Vector<MemoryBreakpoint> videoMemoryBreakpoints;
 
 	public:
 		Debugger(Emulator* emulator);
+		~Debugger();
 		
 		void Pause();
 		void Resume();

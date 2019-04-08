@@ -31,6 +31,13 @@ namespace libnes
 			return data[index];
 		}
 
+		T& operator[](uint32_t index) const
+		{
+			assert(index < length);
+
+			return data[index];
+		}
+
 		void Add(const T& element)
 		{
 			assert(length < capacity);

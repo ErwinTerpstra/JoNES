@@ -4,6 +4,11 @@
 namespace libnes
 {
 	class Debugger;
+
+	template<typename T>
+	class Vector;
+
+	struct MemoryBreakpoint;
 }
 
 namespace JoNES
@@ -34,7 +39,8 @@ namespace JoNES
 
 		void DrawRegisters();
 		void DrawDisassembly();
-		void DrawBreakpoints();
+		void DrawExecutionBreakpoints();
+		void DrawMemoryBreakpoints(libnes::Vector<libnes::MemoryBreakpoint>& breakpoints);
 
 		void DecodePatternTable(Texture* texture, uint16_t address);
 		void DecodeNametable(Texture* texture, uint16_t address);

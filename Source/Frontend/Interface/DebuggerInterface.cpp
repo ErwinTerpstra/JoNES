@@ -112,8 +112,14 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 	if (ImGui::CollapsingHeader("Disassembly", ImGuiTreeNodeFlags_DefaultOpen))
 		DrawDisassembly();
 
-	if (ImGui::CollapsingHeader("Breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
-		DrawBreakpoints();
+	if (ImGui::CollapsingHeader("Execution breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
+		DrawExecutionBreakpoints();
+
+	if (ImGui::CollapsingHeader("Main memory breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
+		DrawMemoryBreakpoints(debugger->mainMemoryBreakpoints);
+
+	if (ImGui::CollapsingHeader("Video memory breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
+		DrawMemoryBreakpoints(debugger->videoMemoryBreakpoints);
 
 	ImGui::End();
 }
@@ -124,6 +130,20 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 	const float nametableScale = 1;
 
 	ImGui::Begin("PPU debugger", open);
+
+
+	if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		PPU* ppu = debugger->emulator->device->ppu;
+		const PPU_Registers& registers = ppu->GetRegisters();
+		
+		ImGui::Text("Scanline: %u", ppu->Scanline());
+		ImGui::Text("VRAM address: $%04X", registers.vramAddress);
+
+		ImGui::Text("PPUCTRL: $%04X", registers.control);
+		ImGui::Text("PPUMASK: $%04X", registers.mask);
+		ImGui::Text("PPUSTATUS: $%04X", registers.status);
+	}
 
 	if (ImGui::CollapsingHeader("Pattern tables", ImGuiTreeNodeFlags_DefaultOpen))
 	{
@@ -150,6 +170,38 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 			ImGui::Image(nametables[i], ImVec2(nametables[i]->Width() * nametableScale, nametables[i]->Height() * nametableScale));
 			ImGui::Separator();
 		}
+	}
+
+	if (ImGui::CollapsingHeader("Palettes", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::Columns(5, NULL, false);
+
+		Device* device = debugger->emulator->device;
+		for (uint8_t paletteIndex = 0; paletteIndex < 8; ++paletteIndex)
+		{
+			ImGui::Text("$%04X:", NES_PPU_PALETTE_RAM | (paletteIndex << 2));
+			ImGui::NextColumn();
+
+			for (uint8_t colorIndex = 0; colorIndex < 4; ++colorIndex)
+			{
+				// Read the color value for this palette and color index
+				uint8_t addressLSB = (paletteIndex << 2) + colorIndex;
+				uint8_t ntscColor = device->videoMemory->ReadU8(NES_PPU_PALETTE_RAM | addressLSB);
+
+				// Convert the NTSC color to RGB
+				uint8_t rgbColor[3];
+				device->ppu->DecodeColor(ntscColor, rgbColor);
+
+				ImVec4 color = ImVec4(rgbColor[0] / 255.0f, rgbColor[1] / 255.0f, rgbColor[2] / 255.0f, 1.0f);
+				ImGui::Text("$%02X", ntscColor);
+				ImGui::SameLine();
+				ImGui::ColorButton("", color);
+
+				ImGui::NextColumn();
+			}
+		}
+
+		ImGui::Columns(1);
 	}
 
 	ImGui::End();
@@ -356,35 +408,71 @@ void DebuggerInterface::DrawDisassembly()
 	ImGui::Columns(1);
 }
 
-void DebuggerInterface::DrawBreakpoints()
+void DebuggerInterface::DrawExecutionBreakpoints()
 {
+	ImGui::BeginChild("ExecutionBreakpointss", ImVec2(0, 100), true);
+
+	for (uint32_t breakpointIdx = 0; breakpointIdx < debugger->breakpoints.Length(); )
 	{
-		ImGui::BeginChild("breakpoints", ImVec2(0, 100), true);
+		ImGui::Text("$%04X", debugger->breakpoints[breakpointIdx]);
 
-		for (uint32_t breakpointIdx = 0; breakpointIdx < debugger->breakpoints.Length(); )
-		{
-			ImGui::Text("$%04X", debugger->breakpoints[breakpointIdx]);
+		ImGui::SameLine();
 
-			ImGui::SameLine();
-
-			if (ImGui::Button("Delete"))
-				debugger->breakpoints.RemoveIndex(breakpointIdx);
-			else
-				++breakpointIdx;
-		}
-
-		ImGui::EndChild();
-
-		static char breakpointBuffer[5];
-		uint16_t breakpointPC;
-
-		if (InputU16("Add", breakpointBuffer, &breakpointPC))
-		{
-			debugger->breakpoints.Add(breakpointPC);
-			
-			breakpointBuffer[0] = '\0';
-		}
+		if (ImGui::Button("Delete"))
+			debugger->breakpoints.RemoveIndex(breakpointIdx);
+		else
+			++breakpointIdx;
 	}
+
+	ImGui::EndChild();
+
+	static char breakpointBuffer[5];
+	uint16_t breakpointPC;
+
+	if (InputU16("Add", breakpointBuffer, &breakpointPC))
+	{
+		debugger->breakpoints.Add(breakpointPC);
+			
+		breakpointBuffer[0] = '\0';
+	}
+}
+
+void DebuggerInterface::DrawMemoryBreakpoints(libnes::Vector<libnes::MemoryBreakpoint>& breakpoints)
+{
+	ImGui::PushID(&breakpoints);
+
+	ImGui::BeginChild("", ImVec2(0, 100), true);
+
+	for (uint32_t breakpointIdx = 0; breakpointIdx < breakpoints.Length(); )
+	{
+		ImGui::Text("$%04X", breakpoints[breakpointIdx].address);
+		ImGui::SameLine();
+
+		ImGui::Checkbox("Read", &breakpoints[breakpointIdx].read);
+		ImGui::SameLine();
+
+		ImGui::Checkbox("Write", &breakpoints[breakpointIdx].write);
+		ImGui::SameLine();
+
+		if (ImGui::Button("Delete"))
+			breakpoints.RemoveIndex(breakpointIdx);
+		else
+			++breakpointIdx;
+	}
+
+	ImGui::EndChild();
+
+	static char breakpointBuffer[5];
+	uint16_t breakpointPC;
+
+	if (InputU16("Add", breakpointBuffer, &breakpointPC))
+	{
+		breakpoints.Add(MemoryBreakpoint { breakpointPC, false, true });
+
+		breakpointBuffer[0] = '\0';
+	}
+
+	ImGui::PopID();
 }
 
 bool DebuggerInterface::InputU16(const char* buttonLabel, char* buffer, uint16_t* input)

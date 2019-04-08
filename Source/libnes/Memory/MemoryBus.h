@@ -12,28 +12,16 @@ namespace libnes
 	{
 	private:
 		MemoryInterface* interface;
-		MemoryInterface* originalInterface;
 
 	public:
 		MemoryBus(MemoryInterface* interface);
-
-		template <class T>
-		T InstallProxy()
+		
+		void BindInterface(MemoryInterface* interface)
 		{
-			assert(interface == originalInterface);
-
-			interface = new T(interface);
-			return interface;
+			this->interface = interface;
 		}
 
-		void UninstallProxy()
-		{
-			assert(interface != originalInterface);
-			
-			delete interface;
-
-			interface = originalInterface;
-		}
+		MemoryInterface* GetInterface() const { return interface; }
 
 		uint8_t ReadU8(uint16_t address) const;
 		int8_t ReadS8(uint16_t address) const;
@@ -41,7 +29,7 @@ namespace libnes
 		uint16_t ReadU16_NoPageCross(uint16_t address) const;
 		uint16_t ReadU16_ZeroPage(uint8_t offset) const;
 		void Read(uint8_t* buffer, uint16_t address, uint16_t length) const;
-		
+
 		void WriteU8(uint16_t address, uint8_t value) const;
 		void WriteU16(uint16_t address, uint16_t value) const;
 	};

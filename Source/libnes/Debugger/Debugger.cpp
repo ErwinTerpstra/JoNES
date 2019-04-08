@@ -7,11 +7,22 @@
 #include "CPU/CPU.h"
 #include "CPU/instruction.h"
 
+#include "DebuggerMemoryInterface.h"
+
 using namespace libnes;
 
-Debugger::Debugger(Emulator* emulator) : emulator(emulator), breakpoints(32), paused(true), emulatorTime(0.0f), previousTime(0.0f)
+Debugger::Debugger(Emulator* emulator) : emulator(emulator),
+	breakpoints(32), mainMemoryBreakpoints(32), videoMemoryBreakpoints(32),
+	paused(true), emulatorTime(0.0f), previousTime(0.0f)
 {
+	mainMemoryProxy = new DebuggerMemoryInterface(this, mainMemoryBreakpoints, emulator->device->mainMemory);
+	videoMemoryProxy = new DebuggerMemoryInterface(this, videoMemoryBreakpoints, emulator->device->videoMemory);
+}
 
+Debugger::~Debugger()
+{
+	SAFE_DELETE(mainMemoryProxy);
+	SAFE_DELETE(videoMemoryProxy);
 }
 
 void Debugger::Pause()
@@ -45,6 +56,7 @@ void Debugger::Step()
 	{
 		if (breakpoints[breakpointIdx] == pc)
 		{
+			printf("[Debugger]: Execution breakpoint hit at $%04X\n", pc);
 			Pause();
 			break;
 		}
