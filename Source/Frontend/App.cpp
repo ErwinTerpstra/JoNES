@@ -8,6 +8,9 @@
 #include "TestSuite/TestSuite.h"
 
 #include "Window.h"
+
+#include "Input/InputHandler.h"
+
 #include "Rendering/Renderer.h"
 
 #include "Interface/InterfaceController.h"
@@ -58,6 +61,8 @@ bool App::Init()
 		return false;
 	}
 
+	inputHandler = new InputHandler(emulator->device, window);
+
 	debuggerInterface = new DebuggerInterface(debugger);
 	
 	return true;
@@ -65,6 +70,8 @@ bool App::Init()
 
 void App::Shutdown()
 {
+	SAFE_DELETE(inputHandler);
+
 	SAFE_DELETE(debuggerInterface);
 	SAFE_DELETE(debugger);
 	SAFE_DELETE(emulator);
@@ -126,6 +133,8 @@ void App::Update()
 	float currentTime = (float) glfwGetTime();
 	deltaTime = currentTime - time;
 	time = currentTime;
+
+	inputHandler->Update();
 
 	debugger->Update(time);
 

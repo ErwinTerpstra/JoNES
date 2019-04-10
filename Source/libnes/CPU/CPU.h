@@ -11,6 +11,28 @@ namespace libnes
 {
 	struct Device;
 
+	struct Address
+	{
+		uint16_t value;
+		bool crossedPage;
+
+		Address(uint16_t value) : value(value), crossedPage(false)
+		{
+
+		}
+
+		Address(uint16_t baseValue, uint8_t offset)
+		{
+			value = baseValue + offset;
+			crossedPage = (value & 0xFF00) != (baseValue & 0xFF00);
+		}
+
+		operator uint16_t() const
+		{
+			return value;
+		}
+	};
+
 	class CPU
 	{
 	private:
@@ -68,8 +90,8 @@ namespace libnes
 		uint16_t PopStackU16();
 
 		// Memory addressing
-		uint16_t ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const;
-		uint8_t ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress) const;
+		Address ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const;
+		uint8_t ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress);
 		void WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress, uint8_t value);
 
 		// ALU instructions

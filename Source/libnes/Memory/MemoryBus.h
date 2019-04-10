@@ -24,6 +24,8 @@ namespace libnes
 		MemoryInterface* GetInterface() const { return interface; }
 
 		uint8_t ReadU8(uint16_t address) const;
+		uint8_t PeekU8(uint16_t address) const;
+
 		int8_t ReadS8(uint16_t address) const;
 		uint16_t ReadU16(uint16_t address) const;
 		uint16_t ReadU16_NoPageCross(uint16_t address) const;

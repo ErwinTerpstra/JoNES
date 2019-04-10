@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="Input\InputHandler.h" />
     <ClInclude Include="Interface\DebuggerInterface.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="App.h" />
@@ -192,6 +193,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Input\InputHandler.cpp" />
     <ClCompile Include="Interface\DebuggerInterface.cpp" />
     <ClCompile Include="Interface\InterfaceController.cpp" />
     <ClCompile Include="Interface\InterfaceRenderer.cpp" />

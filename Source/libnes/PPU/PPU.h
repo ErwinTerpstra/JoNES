@@ -92,6 +92,11 @@ namespace libnes
 		void DecodePatternTable(uint16_t address, uint8_t* buffer);
 		void DecodeNametable(uint16_t address, uint8_t* buffer);
 
+		uint64_t Cycles() const
+		{
+			return cycles;
+		}
+
 		uint64_t MasterClockCycles() const
 		{
 			return cycles * NES_NTSC_PPU_CLOCK_DIVIDER;

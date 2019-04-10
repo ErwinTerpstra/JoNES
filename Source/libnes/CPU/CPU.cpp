@@ -127,41 +127,41 @@ uint16_t CPU::PopStackU16()
 	return device->mainMemory->ReadU16(NES_STACK_START + registers.s - 1);
 }
 
-uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const
+Address CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const
 {
 	MemoryBus* memory = device->mainMemory;
 
 	switch (mode)
 	{
 		case ADDR_IMM:
-			return operandAddress;
+			return Address(operandAddress);
 
 		case ADDR_ZP:
-			return memory->ReadU8(operandAddress);
+			return Address(memory->ReadU8(operandAddress));
 
 		case ADDR_ZPX:
-			return (memory->ReadU8(operandAddress) + registers.x) & 0xFF;
+			return Address((memory->ReadU8(operandAddress) + registers.x) & 0xFF);
 
 		case ADDR_ZPY:
-			return (memory->ReadU8(operandAddress) + registers.y) & 0xFF;
+			return Address((memory->ReadU8(operandAddress) + registers.y) & 0xFF);
 
 		case ADDR_IND:
-			return memory->ReadU16_NoPageCross(memory->ReadU16(operandAddress));
+			return Address(memory->ReadU16_NoPageCross(memory->ReadU16(operandAddress)));
 
 		case ADDR_IZPX:
-			return memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress) + registers.x);
+			return Address(memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress) + registers.x));
 
 		case ADDR_IZPY:
-			return memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress)) + registers.y;
+			return Address(memory->ReadU16_ZeroPage(memory->ReadU8(operandAddress)), registers.y);
 
 		case ADDR_ABS:
-			return memory->ReadU16(operandAddress);
+			return Address(memory->ReadU16(operandAddress));
 
 		case ADDR_ABSX:
-			return memory->ReadU16(operandAddress) + registers.x;
+			return Address(memory->ReadU16(operandAddress), registers.x);
 
 		case ADDR_ABSY:
-			return memory->ReadU16(operandAddress) + registers.y;
+			return Address(memory->ReadU16(operandAddress), registers.y);
 
 		case ADDR_REL:
 		case ADDR_IMPL:
@@ -172,15 +172,23 @@ uint16_t CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddr
 	}
 }
 
-uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress) const
+uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(mode, operandAddress);
+	Address address = ResolveAddress(mode, operandAddress);
+
+	if (address.crossedPage)
+		++cycles;
+
 	return device->mainMemory->ReadU8(address);
 }
 
 void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress, uint8_t value)
 {
-	uint16_t address = ResolveAddress(mode, operandAddress);
+	Address address = ResolveAddress(mode, operandAddress);
+
+	//if (address.crossedPage)
+		//++cycles;
+
 	device->mainMemory->WriteU8(address, value);
 }
 
@@ -235,7 +243,7 @@ void CPU::cpy(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::dec(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
+	Address address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 	
 	value = ALU::dec(registers, value);
@@ -255,7 +263,7 @@ void CPU::dey(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::inc(const Instruction& instruction, uint16_t operandAddress)
 {
-	uint16_t address = ResolveAddress(instruction.addressingMode, operandAddress);
+	Address address = ResolveAddress(instruction.addressingMode, operandAddress);
 	uint8_t value = device->mainMemory->ReadU8(address);
 
 	value = ALU::inc(registers, value);

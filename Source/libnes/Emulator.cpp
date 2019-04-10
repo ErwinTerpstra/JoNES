@@ -13,6 +13,8 @@
 #include "PPU/PPU.h"
 #include "PPU/VideoMemory.h"
 
+#include "Input/Input.h"
+
 #include "Cartridge.h"
 
 using namespace libnes;
@@ -22,8 +24,12 @@ Emulator::Emulator()
 	frameBuffer = new uint8_t[NES_FRAME_WIDTH * NES_FRAME_HEIGHT * 3];
 
 	device = new Device();
+
 	device->cpu = new CPU(device);
 	device->ppu = new PPU(device, frameBuffer);
+
+	device->input = new Input();
+
 	device->mainMemory = new MemoryBus(new MainMemory(device));
 	device->videoMemory = new MemoryBus(new VideoMemory(device));
 }
@@ -36,6 +42,8 @@ Emulator::~Emulator()
 	{
 		delete device->cpu;
 		delete device->ppu;
+
+		delete device->input;
 
 		delete device->mainMemory;
 		delete device->videoMemory;

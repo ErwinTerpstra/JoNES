@@ -36,12 +36,9 @@ uint8_t Cartridge::ReadMain(uint16_t address)
 
 uint8_t Cartridge::PeekMain(uint16_t address) const
 {
-	assert(address >= 0x6000);
-
 	if (address < 0x8000)
 	{
 		// PRG RAM area, not supported
-		assert(false);
 		return 0;
 	}
 

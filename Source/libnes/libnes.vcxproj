@@ -126,6 +126,10 @@
     <ClInclude Include="CPU\Instruction.h" />
     <ClInclude Include="CPU\Registers.h" />
     <ClInclude Include="Debugger\DebuggerMemoryInterface.h" />
+    <ClInclude Include="Input\Controller.h" />
+    <ClInclude Include="Input\DummyController.h" />
+    <ClInclude Include="Input\Input.h" />
+    <ClInclude Include="Input\StandardController.h" />
     <ClInclude Include="Memory\MemoryProxy.h" />
     <ClInclude Include="PPU\PPU.h" />
     <ClInclude Include="PPU\VideoMemory.h" />
@@ -149,6 +153,7 @@
     <ClCompile Include="CPU\CPU.cpp" />
     <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="CPU\opcodes.cpp" />
+    <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="Memory\MainMemory.cpp" />
     <ClCompile Include="Memory\MemoryBus.cpp" />
     <ClCompile Include="PPU\PPU.cpp" />

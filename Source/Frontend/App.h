@@ -10,6 +10,8 @@ namespace libnes
 namespace JoNES
 {
 	class Window;
+	class InputHandler;
+
 	class Renderer;
 	class InterfaceController;
 	class DebuggerInterface;
@@ -21,11 +23,12 @@ namespace JoNES
 		float deltaTime;
 
 		Window* window;
+		InputHandler* inputHandler;
 
 		Renderer* renderer;
 		InterfaceController* interfaceController;
 		DebuggerInterface* debuggerInterface;
-	
+			
 	public:
 		libnes::Emulator* emulator;
 		libnes::Debugger* debugger;

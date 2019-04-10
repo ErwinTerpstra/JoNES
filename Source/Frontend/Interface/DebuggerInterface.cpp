@@ -41,28 +41,17 @@ DebuggerInterface::~DebuggerInterface()
 void DebuggerInterface::Update(float deltaTime)
 {
 	static bool showCPUWindow = true;
-	static bool showPPUWindow = false;
-
-	{
-		ImGui::BeginMainMenuBar();
-
-		if (ImGui::BeginMenu("Windows"))
-		{
-			ImGui::MenuItem("CPU debugger", NULL, &showCPUWindow);
-			ImGui::MenuItem("PPU debugger", NULL, &showPPUWindow);
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndMainMenuBar();
-	}
+	static bool showPPUWindow = true;
+	static bool showMemoryWindow = true;
 
 	DrawCPUWindow(&showCPUWindow);
 	DrawPPUWindow(&showPPUWindow);
+	DrawMemoryWindow(&showMemoryWindow);
 }
 
 void DebuggerInterface::DrawCPUWindow(bool* open)
 {
-	ImGui::Begin("CPU debugger", open);
+	ImGui::Begin("CPU", open);
 	
 	ImGui::Columns(2, NULL, false);
 
@@ -112,14 +101,17 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 	if (ImGui::CollapsingHeader("Disassembly", ImGuiTreeNodeFlags_DefaultOpen))
 		DrawDisassembly();
 
-	if (ImGui::CollapsingHeader("Execution breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
-		DrawExecutionBreakpoints();
+	if (ImGui::CollapsingHeader("Breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		if (ImGui::CollapsingHeader("Execution", ImGuiTreeNodeFlags_DefaultOpen))
+			DrawExecutionBreakpoints();
 
-	if (ImGui::CollapsingHeader("Main memory breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
-		DrawMemoryBreakpoints(debugger->mainMemoryBreakpoints);
+		if (ImGui::CollapsingHeader("Main memory", ImGuiTreeNodeFlags_DefaultOpen))
+			DrawMemoryBreakpoints(debugger->mainMemoryBreakpoints);
 
-	if (ImGui::CollapsingHeader("Video memory breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
-		DrawMemoryBreakpoints(debugger->videoMemoryBreakpoints);
+		if (ImGui::CollapsingHeader("Video memory", ImGuiTreeNodeFlags_DefaultOpen))
+			DrawMemoryBreakpoints(debugger->videoMemoryBreakpoints);
+	}
 
 	ImGui::End();
 }
@@ -129,9 +121,8 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 	const float patternTableScale = 2;
 	const float nametableScale = 1;
 
-	ImGui::Begin("PPU debugger", open);
-
-
+	ImGui::Begin("PPU", open);
+	
 	if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		PPU* ppu = debugger->emulator->device->ppu;
@@ -207,6 +198,30 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 	ImGui::End();
 }
 
+void DebuggerInterface::DrawMemoryWindow(bool* open)
+{
+	MemoryBus* memoryBus = debugger->emulator->device->mainMemory;
+
+	ImGui::Begin("Memory", open);
+
+	for (uint32_t address = 0x0000; address <= 0xFFFF; address += 0x08)
+	{
+		ImGui::Text("$%04X", address);
+
+		ImGui::SameLine();
+
+		for (uint8_t offset = 0; offset < 8; ++offset)
+		{
+			ImGui::Text("$%02X", memoryBus->PeekU8(address + offset));
+
+			if (offset < 7)
+				ImGui::SameLine();
+		}
+	}
+
+	ImGui::End();
+}
+
 void DebuggerInterface::DecodePatternTable(Texture* texture, uint16_t address)
 {
 	PPU* ppu = debugger->emulator->device->ppu;
@@ -253,7 +268,7 @@ void DebuggerInterface::DrawRegisters()
 	ImGui::Columns(2, NULL, false);
 
 	{
-		ImGui::Text("PC: 0x%04X", cpu->registers.pc);
+		ImGui::Text("PC: $%04X", cpu->registers.pc);
 		
 		if (ImGui::BeginPopupContextItem("SetPC"))
 		{
@@ -271,19 +286,19 @@ void DebuggerInterface::DrawRegisters()
 
 		ImGui::NextColumn();
 
-		ImGui::Text("S:  0x%02X", cpu->registers.s);
+		ImGui::Text("S:  $%02X", cpu->registers.s);
 		ImGui::NextColumn();
 
-		ImGui::Text("A:  0x%02X", cpu->registers.a);
+		ImGui::Text("A:  $%02X", cpu->registers.a);
 		ImGui::NextColumn();
 
-		ImGui::Text("P:  0x%02X", cpu->registers.p);
+		ImGui::Text("P:  $%02X", cpu->registers.p);
 		ImGui::NextColumn();
 
-		ImGui::Text("X:  0x%02X", cpu->registers.x);
+		ImGui::Text("X:  $%02X", cpu->registers.x);
 		ImGui::NextColumn();
 
-		ImGui::Text("Y:  0x%02X", cpu->registers.y);
+		ImGui::Text("Y:  $%02X", cpu->registers.y);
 		ImGui::NextColumn();
 	}
 
@@ -331,14 +346,14 @@ void DebuggerInterface::DrawDisassembly()
 		const Instruction& instruction = cpu->DecodeInstruction(pc);
 		
 		{
-			ImGui::Text("0x%04X", pc);
+			ImGui::Text("$%04X", pc);
 			ImGui::NextColumn();
 		}
 
 		{
 			for (uint32_t i = 0; i < instruction.length(); ++i)
 			{
-				ImGui::Text("0x%02X", memory->ReadU8(pc + i));
+				ImGui::Text("$%02X", memory->ReadU8(pc + i));
 				ImGui::SameLine();
 			}
 

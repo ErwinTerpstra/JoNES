@@ -5,6 +5,9 @@ namespace libnes
 {
 	class CPU;
 	class PPU;
+
+	class Input;
+
 	class MemoryBus;
 	class Cartridge;
 
@@ -12,6 +15,8 @@ namespace libnes
 	{
 		CPU* cpu;
 		PPU* ppu;
+
+		Input* input;
 
 		MemoryBus* mainMemory;
 		MemoryBus* videoMemory;

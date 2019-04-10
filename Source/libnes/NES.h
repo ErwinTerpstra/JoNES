@@ -22,6 +22,10 @@
 
 #define NES_CPU_RAM_SIZE						0x0800
 
+#define NES_CPU_REG_OAMDMA						0x4014
+#define NES_CPU_REG_JOY0						0x4016
+#define NES_CPU_REG_JOY1						0x4017
+
 // PPU ram
 #define NES_PPU_RAM_SIZE						0x800
 #define NES_PPU_RAM_ADDRESS_MASK				0x7FF

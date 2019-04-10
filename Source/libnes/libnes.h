@@ -20,6 +20,10 @@
 #include "Memory/MemoryInterface.h"
 #include "Memory/MemoryProxy.h"
 
+#include "Input/Input.h"
+#include "Input/Controller.h"
+#include "Input/StandardController.h"
+
 #include "Debugger/Debugger.h"
 
 #include "Util/Vector.h"

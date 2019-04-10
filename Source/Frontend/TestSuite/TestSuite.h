@@ -24,7 +24,8 @@ namespace JoNES
 		void RunAutomated(const char* logFileName);
 
 	private:
-		uint32_t WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bool withCycleCounts);
+		uint32_t WritePreInstructionStateToLog(char* buffer, uint32_t bufferSize);
+		uint32_t WritePostInstructionStateToLog(char* buffer, uint32_t bufferSize);
 
 	};
 }

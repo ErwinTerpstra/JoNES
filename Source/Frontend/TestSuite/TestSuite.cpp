@@ -33,7 +33,7 @@ void TestSuite::RunAutomated(const char* logFileName)
 
 	while (true)
 	{
-		buffer += WriteCurrentStateToLog(buffer, bufferSize - (buffer - bufferStart), false);
+		buffer += WritePreInstructionStateToLog(buffer, bufferSize - (buffer - bufferStart));
 
 		const Instruction& instruction = emulator->ExecuteNextInstruction();
 
@@ -42,14 +42,17 @@ void TestSuite::RunAutomated(const char* logFileName)
 			printf("[nestest]: Stopping automated test because of missing opcode implementation.\n");
 			break;
 		}
+
+		buffer += WritePostInstructionStateToLog(buffer, bufferSize - (buffer - bufferStart));
 	}
 
 	File::WriteFile(logFileName, bufferStart);
 }
 
-uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bool withCycleCounts)
+uint32_t TestSuite::WritePreInstructionStateToLog(char* buffer, uint32_t bufferSize)
 {
 	CPU* cpu = emulator->device->cpu;
+	PPU* ppu = emulator->device->ppu;
 	MemoryBus* memory = emulator->device->mainMemory;
 	Registers& registers = cpu->registers;
 
@@ -192,19 +195,24 @@ uint32_t TestSuite::WriteCurrentStateToLog(char* buffer, uint32_t bufferSize, bo
 	buffer += sprintf_s(buffer, bufferSize, "A:%02X X:%02X Y:%02X P:%02X SP:%02X", 
 					  registers.a, registers.x, registers.y, registers.p, registers.s);
 
-	if (withCycleCounts)
-	{
-		buffer += sprintf_s(buffer, bufferSize, " ");
+	buffer += sprintf_s(buffer, bufferSize, " ");
 
-		// PPU
-		buffer += sprintf_s(buffer, bufferSize, "PPU:%3d,%3d ", 0, 0);
+	// PPU
+	buffer += sprintf_s(buffer, bufferSize, "PPU:%3llu,%3u ", ppu->Cycles() % NES_PPU_CYCLES_PER_SCANLINE, ppu->Scanline());
 
-		// Cycles
-		buffer += sprintf_s(buffer, bufferSize, "CYC:%llu", cpu->Cycles());
-	}
+	// Cycles
+	buffer += sprintf_s(buffer, bufferSize, "CYC:%llu", cpu->Cycles() + 7);
 
 	// Newline
 	buffer += sprintf_s(buffer, bufferSize, "\n");
+
+	return buffer - bufferStart;
+}
+
+uint32_t TestSuite::WritePostInstructionStateToLog(char* buffer, uint32_t bufferSize)
+{
+	char* bufferStart = buffer;
+
 
 	return buffer - bufferStart;
 }

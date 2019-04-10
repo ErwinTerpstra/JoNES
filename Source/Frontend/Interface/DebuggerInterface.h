@@ -36,6 +36,7 @@ namespace JoNES
 	private:
 		void DrawCPUWindow(bool* open);
 		void DrawPPUWindow(bool* open);
+		void DrawMemoryWindow(bool* open);
 
 		void DrawRegisters();
 		void DrawDisassembly();

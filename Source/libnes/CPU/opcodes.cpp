@@ -39,7 +39,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x0E, 6, ADDR_ABS,			"ASL", &CPU::asl },
 	{ 0x0F, 6, ADDR_INVALID, "", NULL },
 
-	{ 0x10, 3, ADDR_REL,			"BPL", &CPU::branch },
+	{ 0x10, 2, ADDR_REL,			"BPL", &CPU::branch },
 	{ 0x11, 5, ADDR_IZPY,			"ORA", &CPU::ora },
 	{ 0x12, 1, ADDR_INVALID, "", NULL },
 	{ 0x13, 8, ADDR_INVALID, "", NULL },
@@ -107,7 +107,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x4E, 6, ADDR_ABS,			"LSR", &CPU::lsr },
 	{ 0x4F, 6, ADDR_INVALID, "", NULL },
 
-	{ 0x50, 3, ADDR_REL,			"BVC", &CPU::branch },
+	{ 0x50, 2, ADDR_REL,			"BVC", &CPU::branch },
 	{ 0x51, 5, ADDR_IZPY,			"EOR", &CPU::eor },
 	{ 0x52, 1, ADDR_INVALID, "", NULL },
 	{ 0x53, 8, ADDR_INVALID, "", NULL },
@@ -175,7 +175,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0x8E, 4, ADDR_ABS,			"STX", &CPU::stx },
 	{ 0x8F, 4, ADDR_ABS,			"SAX", &CPU::sax },
 
-	{ 0x90, 3, ADDR_REL,			"BCC", &CPU::branch },
+	{ 0x90, 2, ADDR_REL,			"BCC", &CPU::branch },
 	{ 0x91, 6, ADDR_IZPY,			"STA", &CPU::sta },
 	{ 0x92, 1, ADDR_INVALID, "", NULL },
 	{ 0x93, 6, ADDR_INVALID, "", NULL },
@@ -243,7 +243,7 @@ const Instruction CPU::INSTRUCTION_MAP[] =
 	{ 0xCE, 6, ADDR_ABS,			"DEC", &CPU::dec },
 	{ 0xCF, 6, ADDR_INVALID, "", NULL },
 
-	{ 0xD0, 3, ADDR_REL,			"BNE", &CPU::branch },
+	{ 0xD0, 2, ADDR_REL,			"BNE", &CPU::branch },
 	{ 0xD1, 5, ADDR_IZPY,			"CMP", &CPU::cmp },
 	{ 0xD2, 1, ADDR_INVALID, "", NULL },
 	{ 0xD3, 8, ADDR_INVALID, "", NULL },
