@@ -336,20 +336,28 @@ void DebuggerInterface::DrawDisassembly()
 	CPU* cpu = device->cpu;
 	MemoryBus* memory = device->mainMemory;
 	Registers& registers = cpu->registers;
-
-	uint16_t pc = registers.pc;
+	
+	ImGui::BeginChild("Disassembly", ImVec2(0, 400), true);
 
 	ImGui::Columns(3);
 
-	for (uint32_t i = 0; i < 10; ++i)
+	uint32_t pc = 0x6000;//registers.pc;
+
+	while (pc <= 0xFFFF)
 	{
 		const Instruction& instruction = cpu->DecodeInstruction(pc);
-		
+
+		if (pc == registers.pc)
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+			ImGui::SetScrollHereY();
+		}
+
 		{
 			ImGui::Text("$%04X", pc);
 			ImGui::NextColumn();
 		}
-
+				
 		{
 			for (uint32_t i = 0; i < instruction.length(); ++i)
 			{
@@ -417,10 +425,15 @@ void DebuggerInterface::DrawDisassembly()
 			ImGui::NextColumn();
 		}
 
+		if (pc == registers.pc)
+			ImGui::PopStyleColor();
+
 		pc += instruction.length();
 	}
 
 	ImGui::Columns(1);
+
+	ImGui::EndChild();
 }
 
 void DebuggerInterface::DrawExecutionBreakpoints()

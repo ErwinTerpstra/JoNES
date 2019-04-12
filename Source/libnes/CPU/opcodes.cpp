@@ -17,7 +17,8 @@ const uint8_t Instruction::ADDRESSING_MODE_LENGTHS[] =
 	3,		// Absolute
 	3,		// Absolute, X indexed
 	3,		// Absolute, Y indexed
-	0,		// Invalid
+	
+	1,		// Invalid
 };
 
 const Instruction CPU::INSTRUCTION_MAP[] =
