@@ -32,6 +32,8 @@ Emulator::Emulator()
 
 	device->mainMemory = new MemoryBus(new MainMemory(device));
 	device->videoMemory = new MemoryBus(new VideoMemory(device));
+
+	Reset();
 }
 
 Emulator::~Emulator()

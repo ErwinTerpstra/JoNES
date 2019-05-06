@@ -20,6 +20,9 @@ DebuggerInterface::DebuggerInterface(Debugger* debugger) : debugger(debugger)
 	for (uint32_t i = 0; i < 4; ++i)
 		nametables[i] = new Texture(NES_PPU_NAMETABLE_WIDTH, NES_PPU_NAMETABLE_HEIGHT, false);
 
+	for (uint32_t i = 0; i < NES_PPU_PRIMARY_OAM_SPRITES; ++i)
+		sprites[i] = new Texture(NES_PPU_TILE_SIZE, NES_PPU_TILE_SIZE, false);
+
 	textureBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT * 3];
 	patternBuffer = new uint8_t[NES_PPU_PATTERN_TABLE_WIDTH * NES_PPU_PATTERN_TABLE_HEIGHT];
 	frameBuffer = new uint8_t[NES_FRAME_WIDTH * NES_FRAME_HEIGHT * 3];
@@ -33,6 +36,9 @@ DebuggerInterface::~DebuggerInterface()
 	for (uint32_t i = 0; i < 4; ++i)
 		SAFE_DELETE(nametables[i]);
 
+	for (uint32_t i = 0; i < NES_PPU_PRIMARY_OAM_SPRITES; ++i)
+		SAFE_DELETE(sprites[i]);
+
 	SAFE_DELETE_ARRAY(textureBuffer);
 	SAFE_DELETE_ARRAY(patternBuffer);
 	SAFE_DELETE_ARRAY(frameBuffer);
@@ -42,7 +48,7 @@ void DebuggerInterface::Update(float deltaTime)
 {
 	static bool showCPUWindow = true;
 	static bool showPPUWindow = true;
-	static bool showMemoryWindow = true;
+	static bool showMemoryWindow = false;
 
 	DrawCPUWindow(&showCPUWindow);
 	DrawPPUWindow(&showPPUWindow);
@@ -95,10 +101,10 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 
 	ImGui::Separator();
 
-	if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Registers"))
 		DrawRegisters();
 
-	if (ImGui::CollapsingHeader("Disassembly", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Disassembly"))
 		DrawDisassembly();
 
 	if (ImGui::CollapsingHeader("Breakpoints", ImGuiTreeNodeFlags_DefaultOpen))
@@ -120,12 +126,14 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 {
 	const float patternTableScale = 2;
 	const float nametableScale = 1;
+	const float spriteScale = 2;
+
+	PPU* ppu = debugger->emulator->device->ppu;
 
 	ImGui::Begin("PPU", open);
 	
-	if (ImGui::CollapsingHeader("Registers", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Registers"))
 	{
-		PPU* ppu = debugger->emulator->device->ppu;
 		const PPU_Registers& registers = ppu->GetRegisters();
 		
 		ImGui::Text("Scanline: %u", ppu->Scanline());
@@ -136,7 +144,7 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 		ImGui::Text("PPUSTATUS: $%04X", registers.status);
 	}
 
-	if (ImGui::CollapsingHeader("Pattern tables", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Pattern tables"))
 	{
 		DecodePatternTable(patternTables[0], NES_PPU_PATTERN0);
 		DecodePatternTable(patternTables[1], NES_PPU_PATTERN1);
@@ -149,7 +157,7 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 
 	}
 
-	if (ImGui::CollapsingHeader("Nametables", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Nametables"))
 	{
 		DecodeNametable(nametables[0], NES_PPU_NAMETABLE0);
 		DecodeNametable(nametables[1], NES_PPU_NAMETABLE1);
@@ -163,7 +171,27 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 		}
 	}
 
-	if (ImGui::CollapsingHeader("Palettes", ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader("Sprites"))
+	{
+		uint8_t* oam = ppu->GetOAM();
+
+		for (uint8_t spriteIndex = 0; spriteIndex < NES_PPU_PRIMARY_OAM_SPRITES; ++spriteIndex)
+		{
+			Sprite* sprite = reinterpret_cast<Sprite*>(oam + spriteIndex * NES_PPU_SPRITE_SIZE);
+
+			DecodeSprite(sprites[spriteIndex], sprite);
+
+			ImGui::Text("#%2u | X: %3u; Y: %3u; Tile: %3u", spriteIndex, sprite->x, sprite->y, sprite->tileIdx);
+
+			ImGui::SameLine();
+
+			ImGui::Image(sprites[spriteIndex], ImVec2(NES_PPU_TILE_SIZE * spriteScale, NES_PPU_TILE_SIZE * spriteScale));
+
+			ImGui::Separator();
+		}
+	}
+
+	if (ImGui::CollapsingHeader("Palettes"))
 	{
 		ImGui::Columns(5, NULL, false);
 
@@ -204,18 +232,21 @@ void DebuggerInterface::DrawMemoryWindow(bool* open)
 
 	ImGui::Begin("Memory", open);
 
-	for (uint32_t address = 0x0000; address <= 0xFFFF; address += 0x08)
+	if (debugger->IsPaused() && open)
 	{
-		ImGui::Text("$%04X", address);
-
-		ImGui::SameLine();
-
-		for (uint8_t offset = 0; offset < 8; ++offset)
+		for (uint32_t address = 0x0000; address <= 0xFFFF; address += 0x08)
 		{
-			ImGui::Text("$%02X", memoryBus->PeekU8(address + offset));
+			ImGui::Text("$%04X", address);
 
-			if (offset < 7)
-				ImGui::SameLine();
+			ImGui::SameLine();
+
+			for (uint8_t offset = 0; offset < 8; ++offset)
+			{
+				ImGui::Text("$%02X", memoryBus->PeekU8(address + offset));
+
+				if (offset < 7)
+					ImGui::SameLine();
+			}
 		}
 	}
 
@@ -255,6 +286,17 @@ void DebuggerInterface::DecodeNametable(Texture* texture, uint16_t address)
 
 	// Decode the nametable to RGB
 	ppu->DecodeNametable(address, frameBuffer);
+
+	// Load the new RGB data in the texture
+	texture->Load(frameBuffer);
+}
+
+void DebuggerInterface::DecodeSprite(Texture* texture, const Sprite* sprite)
+{
+	PPU* ppu = debugger->emulator->device->ppu;
+
+	// Decode the nametable to RGB
+	ppu->DecodeSprite(sprite, frameBuffer);
 
 	// Load the new RGB data in the texture
 	texture->Load(frameBuffer);

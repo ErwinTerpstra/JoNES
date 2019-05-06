@@ -47,6 +47,8 @@ bool App::Init()
 		return false;
 	}
 
+	window->SetSwapInterval(0);
+
 	renderer = new Renderer(window, emulator);
 	if (!renderer->Init())
 	{
@@ -153,7 +155,7 @@ void App::HandleInterface()
 {
 	ImGui::Begin("Settings");
 	
-	static bool vsync = true;
+	static bool vsync = false;
 	if (ImGui::Checkbox("V-Sync", &vsync))
 		window->SetSwapInterval(vsync ? 1 : 0);
 

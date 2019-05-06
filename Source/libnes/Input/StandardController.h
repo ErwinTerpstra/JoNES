@@ -27,6 +27,12 @@ namespace libnes
 		uint8_t buttonIdx;
 
 	public:
+		StandardController()
+		{
+			for (uint32_t i = 0; i < BUTTON_COUNT; ++i)
+				buttons[i] = false;
+		}
+
 		void SetButtonState(Button button, bool state)
 		{
 			buttons[button] = state;

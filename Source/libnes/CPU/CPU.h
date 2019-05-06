@@ -71,7 +71,7 @@ namespace libnes
 
 		void WaitForOAMDMA()
 		{
-			if (cycles % 2 == 0)
+			if (TEST_BIT(cycles, 0))
 				++cycles;
 
 			cycles += 513;

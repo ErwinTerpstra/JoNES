@@ -44,6 +44,9 @@ namespace libnes
 		bool secondWrite;
 
 		PPU_SpriteRegister sprites[NES_PPU_SECONDARY_OAM_SPRITES];
+
+		bool sprite0ActiveCurrentScanline;
+		bool sprite0ActiveNextScanline;
 	};
 
 	struct PPU_Latches
@@ -89,8 +92,9 @@ namespace libnes
 		void PerformOAMDMA(uint8_t addressMSB);
 
 		void DecodeColor(uint8_t color, uint8_t* buffer) const;
-		void DecodePatternTable(uint16_t address, uint8_t* buffer);
-		void DecodeNametable(uint16_t address, uint8_t* buffer);
+		void DecodeSprite(const Sprite* sprite, uint8_t* buffer) const;
+		void DecodePatternTable(uint16_t address, uint8_t* buffer) const;
+		void DecodeNametable(uint16_t address, uint8_t* buffer) const;
 
 		uint64_t Cycles() const
 		{
@@ -108,6 +112,8 @@ namespace libnes
 		}
 
 		const PPU_Registers& GetRegisters() const { return registers; }
+		uint8_t* GetOAM() { return primaryOAM; }
+
 	private:
 		void EvaluateSprites();
 		void FetchSpriteData();
@@ -127,8 +133,10 @@ namespace libnes
 
 		void DrawDot(uint8_t x, uint8_t y, bool background, bool sprites);
 
-		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer);
-		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer);
+		void DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer) const;
+		void DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer) const;
+
+		uint8_t ReverseByte(uint8_t n) const;
 	};
 
 }

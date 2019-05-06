@@ -1,15 +1,7 @@
 #ifndef _DEBUGGER_INTERFACE_H_
 #define _DEBUGGER_INTERFACE_H_
 
-namespace libnes
-{
-	class Debugger;
-
-	template<typename T>
-	class Vector;
-
-	struct MemoryBreakpoint;
-}
+#include "libnes/libnes.h"
 
 namespace JoNES
 {
@@ -22,6 +14,7 @@ namespace JoNES
 
 		Texture* patternTables[2];
 		Texture* nametables[4];
+		Texture* sprites[NES_PPU_PRIMARY_OAM_SPRITES];
 
 		uint8_t* textureBuffer;
 		uint8_t* patternBuffer;
@@ -45,6 +38,7 @@ namespace JoNES
 
 		void DecodePatternTable(Texture* texture, uint16_t address);
 		void DecodeNametable(Texture* texture, uint16_t address);
+		void DecodeSprite(Texture* texture, const libnes::Sprite* sprite);
 
 		bool InputU16(const char* buttonLabel, char* buffer, uint16_t* input);
 	};

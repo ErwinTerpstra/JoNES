@@ -13,7 +13,8 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 {
 	memcpy(&header, buffer, sizeof(CartridgeHeader_iNES));
 
-	assert(header.GetMapper() == 0);
+	uint8_t mapper = header.GetMapper();
+	assert(mapper == 0);
 	assert(!header.IsNES20());
 
 	prgRomSize = header.GetPrgRomSizeInBytes();

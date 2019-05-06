@@ -16,10 +16,16 @@ const uint8_t NES_2C02_PALETTE_COLORS[] =
 	236, 238, 236, 168, 204, 236, 188, 188, 236, 212, 178, 236, 236, 174, 236, 236, 174, 212, 236, 180, 176, 228, 196, 144, 204, 210, 120, 180, 222, 120, 168, 226, 144, 152, 226, 180, 160, 214, 228, 160, 162, 160, 0, 0, 0, 0, 0, 0,
 };
 
+const uint8_t REVERSED_NIBBLES[] =
+{
+	0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
+	0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf,
+};
+
 PPU::PPU(Device* device, uint8_t* frameBuffer) : device(device), frameBuffer(frameBuffer)
 {
 	primaryOAM = new uint8_t[NES_PPU_PRIMARY_OAM_SIZE];
-	secondaryOAM = new uint8_t[NES_PPU_PRIMARY_OAM_SIZE];
+	secondaryOAM = new uint8_t[NES_PPU_SECONDARY_OAM_SIZE];
 }
 
 PPU::~PPU()
@@ -132,7 +138,10 @@ void PPU::Tick()
 
 	// Increment scanline
 	if (dot == (NES_PPU_CYCLES_PER_SCANLINE - 1))
+	{
 		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
+		registers.sprite0ActiveCurrentScanline = registers.sprite0ActiveNextScanline;
+	}
 
 	// Increment cycle count
 	++cycles;
@@ -263,7 +272,7 @@ void PPU::PerformOAMDMA(uint8_t addressMSB)
 {
 	uint16_t address = addressMSB << 8;
 
-	for (uint16_t offset = 0; offset <= 0xFF; ++offset)
+	for (uint16_t offset = 0; offset < NES_PPU_PRIMARY_OAM_SIZE; ++offset)
 		primaryOAM[registers.oamAddress + offset] = device->mainMemory->ReadU8(address + offset);
 }
 
@@ -282,12 +291,16 @@ void PPU::EvaluateSprites()
 		Sprite* sprite = reinterpret_cast<Sprite*>(primaryOAM + (n * NES_PPU_SPRITE_SIZE));
 
 		// Check if the sprite is in range on this scanline
-		if (scanline >= sprite->y && scanline < sprite->y + spriteHeight)
+		bool spriteActive = scanline >= sprite->y && scanline < sprite->y + spriteHeight;
+		if (spriteActive)
 		{
 			// Copy the sprite into secondary oam
 			memcpy(secondaryOAM + (foundSprites * NES_PPU_SPRITE_SIZE), sprite, NES_PPU_SPRITE_SIZE);
 			++foundSprites;
 		}
+
+		if (n == 0)
+			registers.sprite0ActiveNextScanline = spriteActive;
 
 		n = n + 1;
 	}
@@ -336,6 +349,15 @@ void PPU::FetchSpriteData()
 
 		uint8_t fineY = scanline - sprite->y;
 
+		// Handle vertical flipping
+		if (TEST_BIT(sprite->attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_FLIP_Y))
+		{
+			if (doubleHeight)
+				fineY = (NES_PPU_TILE_SIZE << 1) - fineY;
+			else
+				fineY = NES_PPU_TILE_SIZE - fineY;
+		}
+
 		// Determine which tile index should be used
 		uint8_t tileIndex;
 		if (doubleHeight)
@@ -358,6 +380,13 @@ void PPU::FetchSpriteData()
 		uint16_t address = basePatternTableAddress | (tileIndex << 4) | fineY;
 		spriteRegister.tileDataLow = device->videoMemory->ReadU8(address);
 		spriteRegister.tileDataHigh = device->videoMemory->ReadU8(address | 0x08);
+
+		// Handle horizontal flipping
+		if (TEST_BIT(sprite->attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_FLIP_X))
+		{
+			spriteRegister.tileDataLow = ReverseByte(spriteRegister.tileDataLow);
+			spriteRegister.tileDataHigh = ReverseByte(spriteRegister.tileDataHigh);
+		}
 	}
 }
 
@@ -561,6 +590,10 @@ void PPU::DrawDot(uint8_t x, uint8_t y, bool background, bool sprites)
 
 			// Read the priority bit from the sprite attributes
 			spritePriority = READ_BIT(spriteRegister.attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_PRIORITY);
+
+			// Handle sprite 0 hit
+			if (spriteIndex == 0 && registers.sprite0ActiveCurrentScanline && spriteTileData != 0 && backgroundTileData != 0)
+				registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_SPRITE0_HIT);
 		}
 		
 		// Determine background/sprite priority
@@ -610,7 +643,90 @@ void PPU::DecodeColor(uint8_t color, uint8_t* buffer) const
 	buffer[2] = NES_2C02_PALETTE_COLORS[color * 3 + 2];
 }
 
-void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
+void PPU::DecodeSprite(const Sprite* sprite, uint8_t* buffer) const 
+{
+	bool doubleHeight = READ_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_HEIGHT);
+
+	uint8_t spriteHeight;
+	uint16_t basePatternTableAddress;
+
+	if (doubleHeight)
+	{
+		spriteHeight = NES_PPU_TILE_SIZE << 1;
+
+		// For 8x16 sprites, the pattern table is determined by bit 0 of the tile index
+		basePatternTableAddress = TEST_BIT(sprite->tileIdx, 0) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+	}
+	else
+	{
+		spriteHeight = NES_PPU_TILE_SIZE;
+
+		// For 8x8 sprites, the pattern table is determined by a bit of the control register
+		basePatternTableAddress = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
+	}
+	
+	for (uint8_t y = 0; y < spriteHeight; ++y)
+	{
+		uint8_t fineY;
+
+		// Handle vertical flipping
+		if (TEST_BIT(sprite->attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_FLIP_Y))
+			fineY = spriteHeight - y;
+		else
+			fineY = y;
+
+		// Determine which tile index should be used
+		uint8_t tileIndex;
+		if (doubleHeight)
+		{
+			// Clear bit 0 of the tile index
+			tileIndex = UNSET_BIT(sprite->tileIdx, 0);
+
+			// Select the odd tile index for lower part of 8x16 sprites
+			tileIndex |= READ_BIT(fineY, 3);
+
+			fineY &= 0x07;
+		}
+		else
+			tileIndex = sprite->tileIdx;
+		
+		// Fetch tile data
+		uint16_t address = basePatternTableAddress | (tileIndex << 4) | fineY;
+		uint8_t tileDataLow = device->videoMemory->PeekU8(address);
+		uint8_t tileDataHigh = device->videoMemory->ReadU8(address | 0x08);
+
+		// Handle horizontal flipping
+		if (TEST_BIT(sprite->attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_FLIP_X))
+		{
+			tileDataLow = ReverseByte(tileDataLow);
+			tileDataHigh = ReverseByte(tileDataHigh);
+		}
+
+		// Decode tile data
+		for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
+		{
+			// Pallete index bit 0 & 1 come from tile data
+			uint8_t paletteIndex = (READ_BIT(tileDataHigh, 7 - x) << 1) | READ_BIT(tileDataLow, 7 - x);
+
+			// Bit 2 & 3 come from the sprite attributes
+			paletteIndex |= (sprite->attributes & 0x03) << 2;
+
+			// Bit 4 is set for sprites
+			paletteIndex = SET_BIT(paletteIndex, 4);
+
+			// Read palette color
+			uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
+			uint8_t color = device->videoMemory->PeekU8(paletteAddress);
+
+			// Decode NTSC color to RGB
+			DecodeColor(color, buffer);
+
+			buffer += 3;
+		}
+	}
+}
+
+void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer) const
 {
 	for (uint8_t row = 0; row < NES_PPU_PATTERN_TABLE_TILES_PER_ROW; ++row)
 	{
@@ -625,7 +741,7 @@ void PPU::DecodePatternTable(uint16_t address, uint8_t* buffer)
 	}
 }
 
-void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
+void PPU::DecodeNametable(uint16_t address, uint8_t* buffer) const
 {
 	// Check which pattern table to use for the background
 	uint16_t basePatternTableAddress = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_BACKGROUND_ADDRESS) ? NES_PPU_PATTERN1 : NES_PPU_PATTERN0;
@@ -641,10 +757,10 @@ void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
 				uint16_t attributeAddress = address | 0x03C0 | ((coarseY >> 2) << 3) | (coarseX >> 2);
 
 				// Determine location of tile in pattern table
-				uint8_t patternTableIndex = device->videoMemory->ReadU8(nametableAddress);
+				uint8_t patternTableIndex = device->videoMemory->PeekU8(nametableAddress);
 
 				// Read the attribute data for this tile
-				uint8_t attributeBits = device->videoMemory->ReadU8(attributeAddress);
+				uint8_t attributeBits = device->videoMemory->PeekU8(attributeAddress);
 
 				// Shift the attribute bits to bit 0 & 1
 				attributeBits >>= (READ_BIT(coarseX, 1) << 1);		// Shift 2 if coarse X bit 1 is set
@@ -668,7 +784,7 @@ void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
 
 					// Read palette color
 					uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
-					uint8_t color = device->videoMemory->ReadU8(paletteAddress);
+					uint8_t color = device->videoMemory->PeekU8(paletteAddress);
 
 					// Decode NTSC color to RGB
 					DecodeColor(color, buffer);
@@ -680,12 +796,12 @@ void PPU::DecodeNametable(uint16_t address, uint8_t* buffer)
 	}
 }
 
-void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t column, uint8_t row, uint8_t y, uint8_t* buffer) const
 {
 	return DecodeTileSlice(baseAddress, (row << 3) + column, y, buffer);
 }
 
-void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer)
+void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, uint8_t* buffer) const
 {
 	uint16_t address = baseAddress | (tileIndex << 4) | (y & 0x07);
 	uint8_t lowerPlane = device->videoMemory->ReadU8(address);
@@ -693,4 +809,9 @@ void PPU::DecodeTileSlice(uint16_t baseAddress, uint8_t tileIndex, uint8_t y, ui
 
 	for (uint8_t x = 0; x < NES_PPU_TILE_SIZE; ++x)
 		buffer[x] = (READ_BIT(upperPlane, 7 - x) << 1) | READ_BIT(lowerPlane, 7 - x);
+}
+
+uint8_t PPU::ReverseByte(uint8_t n) const
+{
+	return (REVERSED_NIBBLES[n & 0x0F] << 4) | REVERSED_NIBBLES[n >> 4];
 }

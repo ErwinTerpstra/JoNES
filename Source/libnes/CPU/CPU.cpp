@@ -16,6 +16,8 @@ CPU::CPU(Device* device) : device(device)
 
 void CPU::Reset()
 {
+	cycles = 0;
+
 	registers.p = 0x24;	// NOTE: this should be 0x34, but Nintendulator uses 0x24 so this makes comparing logs easier
 	registers.a = 0x00;
 	registers.x = 0x00;
@@ -91,6 +93,8 @@ void CPU::ServiceIRQ()
 	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
 
 	registers.pc = device->mainMemory->ReadU16(NES_IRQ_VECTOR);
+
+	cycles += NES_CPU_ISR_DURATION;
 }
 
 void CPU::ServiceNMI()
@@ -101,6 +105,8 @@ void CPU::ServiceNMI()
 	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
 
 	registers.pc = device->mainMemory->ReadU16(NES_NMI_VECTOR);
+
+	cycles += NES_CPU_ISR_DURATION;
 }
 
 void CPU::PushStackU8(uint8_t value)
