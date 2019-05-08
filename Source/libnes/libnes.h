@@ -6,7 +6,8 @@
 
 #include "Emulator.h"
 #include "Device.h"
-#include "Cartridge.h"
+
+#include "Cartridge/Cartridge.h"
 
 #include "CPU/CPU.h"
 #include "CPU/Instruction.h"

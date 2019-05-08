@@ -15,7 +15,7 @@
 
 #include "Input/Input.h"
 
-#include "Cartridge.h"
+#include "Cartridge/Cartridge.h"
 
 using namespace libnes;
 

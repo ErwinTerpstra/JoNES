@@ -1,17 +1,15 @@
-#ifndef _CARTRIDGE_H_
-#define _CARTRIDGE_H_
+#ifndef _NROM_H_
+#define _NROM_H_
 
-#include "environment.h"
-
-#include "CartridgeHeader.h"
+#include "Mapper.h"
 
 namespace libnes
 {
-	class Cartridge
-	{
+	struct CartridgeHeader_iNES;
 
+	class NROM : public Mapper
+	{
 	private:
-		CartridgeHeader_iNES header;
 
 		uint8_t* prgRom;
 		uint8_t* chrRom;
@@ -20,14 +18,13 @@ namespace libnes
 		uint32_t chrRomSize;
 
 	public:
-		Cartridge();
-
-		void Load_iNES(uint8_t* buffer, uint32_t bufferSize);
+		NROM(const CartridgeHeader_iNES& header, const uint8_t* buffer);
+		~NROM();
 
 		uint8_t ReadMain(uint16_t address);
 		uint8_t PeekMain(uint16_t address) const;
 		void WriteMain(uint16_t address, uint8_t value);
-		
+
 		uint8_t ReadVideo(uint16_t address);
 		uint8_t PeekVideo(uint16_t address) const;
 		void WriteVideo(uint16_t address, uint8_t value);

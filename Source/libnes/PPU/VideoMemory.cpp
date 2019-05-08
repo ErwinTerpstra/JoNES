@@ -1,7 +1,7 @@
 #include "VideoMemory.h"
 
 #include "Device.h"
-#include "Cartridge.h"
+#include "Cartridge/Cartridge.h"
 
 #include "nes.h"
 #include "util.h"

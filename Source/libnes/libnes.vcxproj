@@ -121,7 +121,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Cartridge.h" />
+    <ClInclude Include="Cartridge\Cartridge.h" />
+    <ClInclude Include="Cartridge\Mapper.h" />
+    <ClInclude Include="Cartridge\NROM.h" />
     <ClInclude Include="CPU\ALU.h" />
     <ClInclude Include="CPU\CPU.h" />
     <ClInclude Include="CPU\Instruction.h" />
@@ -140,7 +142,7 @@
     <ClInclude Include="util.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="Emulator.h" />
-    <ClInclude Include="CartridgeHeader.h" />
+    <ClInclude Include="Cartridge\CartridgeHeader.h" />
     <ClInclude Include="environment.h" />
     <ClInclude Include="libnes.h" />
     <ClInclude Include="Memory\MainMemory.h" />
@@ -150,7 +152,8 @@
     <ClInclude Include="nes.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Cartridge.cpp" />
+    <ClCompile Include="Cartridge\Cartridge.cpp" />
+    <ClCompile Include="Cartridge\NROM.cpp" />
     <ClCompile Include="CPU\CPU.cpp" />
     <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="CPU\opcodes.cpp" />
