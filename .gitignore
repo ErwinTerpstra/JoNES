@@ -6,3 +6,4 @@ Source/libnes/Release/
 Source/Frontend/Release/
 Source/Release/
 *.vspx
+*.deb

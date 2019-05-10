@@ -25,7 +25,6 @@ namespace JoNES
 
 	private:
 		uint32_t WritePreInstructionStateToLog(char* buffer, uint32_t bufferSize);
-		uint32_t WritePostInstructionStateToLog(char* buffer, uint32_t bufferSize);
 
 	};
 }

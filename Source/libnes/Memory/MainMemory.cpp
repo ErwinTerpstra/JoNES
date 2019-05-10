@@ -73,7 +73,7 @@ void MainMemory::Write(uint16_t address, uint8_t value)
 {
 	if (address < 0x2000)
 	{
-		ram[address % 0x800] = value;
+		ram[address % NES_CPU_RAM_SIZE] = value;
 		return;
 	}
 	

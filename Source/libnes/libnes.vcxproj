@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClInclude Include="Cartridge\Cartridge.h" />
     <ClInclude Include="Cartridge\Mapper.h" />
+    <ClInclude Include="Cartridge\SxROM.h" />
     <ClInclude Include="Cartridge\NROM.h" />
     <ClInclude Include="CPU\ALU.h" />
     <ClInclude Include="CPU\CPU.h" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge\Cartridge.cpp" />
+    <ClCompile Include="Cartridge\SxROM.cpp" />
     <ClCompile Include="Cartridge\NROM.cpp" />
     <ClCompile Include="CPU\CPU.cpp" />
     <ClCompile Include="Emulator.cpp" />

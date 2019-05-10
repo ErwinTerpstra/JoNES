@@ -20,6 +20,8 @@ namespace JoNES
 		uint8_t* patternBuffer;
 		uint8_t* frameBuffer;
 
+		bool jumpToPC;
+
 	public:
 		DebuggerInterface(libnes::Debugger* debugger);
 		~DebuggerInterface();

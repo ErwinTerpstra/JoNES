@@ -30,6 +30,11 @@ namespace libnes
 			return (flags7 & 0x0C) == 0x08;
 		}
 
+		bool HasPrgRam() const
+		{
+			return !TEST_BIT(flags10, 4);
+		}
+
 		uint8_t GetMapper() const
 		{
 			return (flags7 & 0xF0) | ((flags6 & 0xF0) >> 4);
@@ -38,6 +43,14 @@ namespace libnes
 		uint32_t GetPrgRomSizeInBytes() const
 		{
 			return prgRomSize << 14;
+		}
+
+		uint32_t GetPrgRamSizeInBytes() const
+		{
+			if (HasPrgRam() && flags8 == 0)
+				return 0x8000;	// use 32KB for compatibility purposes
+			else
+				return flags8 << 13;
 		}
 
 		uint32_t GetChrRomSizeInBytes() const

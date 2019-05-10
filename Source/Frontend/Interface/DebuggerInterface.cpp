@@ -50,9 +50,14 @@ void DebuggerInterface::Update(float deltaTime)
 	static bool showPPUWindow = true;
 	static bool showMemoryWindow = false;
 
-	DrawCPUWindow(&showCPUWindow);
-	DrawPPUWindow(&showPPUWindow);
-	DrawMemoryWindow(&showMemoryWindow);
+	if (showCPUWindow)
+		DrawCPUWindow(&showCPUWindow);
+	
+	if (showPPUWindow)
+		DrawPPUWindow(&showPPUWindow);
+	
+	if (showMemoryWindow)
+		DrawMemoryWindow(&showMemoryWindow);
 }
 
 void DebuggerInterface::DrawCPUWindow(bool* open)
@@ -75,7 +80,10 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 	{
 
 		if (ImGui::Button("Step"))
+		{
 			debugger->Step();
+			jumpToPC = true;
+		}
 
 		ImGui::SameLine();
 
@@ -85,13 +93,19 @@ void DebuggerInterface::DrawCPUWindow(bool* open)
 	else
 	{
 		if (ImGui::Button("Pause"))
+		{
 			debugger->Pause();
+			jumpToPC = true;
+		}
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Reset"))
+	{
 		debugger->Reset();
+		jumpToPC = true;
+	}
 
 	if (ImGui::Button("Run nestest"))
 	{
@@ -379,20 +393,47 @@ void DebuggerInterface::DrawDisassembly()
 	MemoryBus* memory = device->mainMemory;
 	Registers& registers = cpu->registers;
 	
+	jumpToPC |= ImGui::Button("Jump to PC");
+
 	ImGui::BeginChild("Disassembly", ImVec2(0, 400), true);
+	
+	ImGui::Columns(4);
+	ImGui::SetColumnWidth(0, 35.0f);
+	ImGui::SetColumnWidth(1, 50.0f);
+	ImGui::SetColumnWidth(2, 90.0f);
 
-	ImGui::Columns(3);
-
-	uint32_t pc = 0x6000;//registers.pc;
+	uint32_t pc = 0x0000;//registers.pc;
 
 	while (pc <= 0xFFFF)
 	{
+		ImGui::PushID(pc);
+
 		const Instruction& instruction = cpu->DecodeInstruction(pc);
 
 		if (pc == registers.pc)
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-			ImGui::SetScrollHereY();
+
+			if (jumpToPC)
+			{
+				ImGui::SetScrollHereY();
+				jumpToPC = false;
+			}
+		}
+
+		{
+			int32_t breakpointIdx = debugger->breakpoints.IndexOf(pc);
+			bool hasBreakpoint = breakpointIdx >= 0;
+
+			if (ImGui::Checkbox("", &hasBreakpoint))
+			{
+				if (!hasBreakpoint)
+					debugger->breakpoints.RemoveIndex(breakpointIdx);
+				else
+					debugger->breakpoints.Add(pc);
+			}
+
+			ImGui::NextColumn();
 		}
 
 		{
@@ -403,7 +444,7 @@ void DebuggerInterface::DrawDisassembly()
 		{
 			for (uint32_t i = 0; i < instruction.length(); ++i)
 			{
-				ImGui::Text("$%02X", memory->ReadU8(pc + i));
+				ImGui::Text("$%02X", memory->PeekU8(pc + i));
 				ImGui::SameLine();
 			}
 
@@ -417,47 +458,47 @@ void DebuggerInterface::DrawDisassembly()
 			switch (instruction.addressingMode)
 			{
 				case ADDR_IMM:
-					ImGui::Text("#$%02X", memory->ReadU8(pc + 1));
+					ImGui::Text("#$%02X", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_ZP:
-					ImGui::Text("$%02X", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_ZPX:
-					ImGui::Text("$%02X,X", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X,X", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_ZPY:
-					ImGui::Text("$%02X,Y", memory->ReadU8(pc + 1));
+					ImGui::Text("$%02X,Y", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_IND:
-					ImGui::Text("($%04X)", memory->ReadU16(pc + 1));
+					ImGui::Text("($%04X)", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_IZPX:
-					ImGui::Text("($%02X,X)", memory->ReadU8(pc + 1));
+					ImGui::Text("($%02X,X)", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_IZPY:
-					ImGui::Text("($%02X),Y", memory->ReadU8(pc + 1));
+					ImGui::Text("($%02X),Y", memory->PeekU8(pc + 1));
 					break;
 
 				case ADDR_ABS:
-					ImGui::Text("$%04X", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X", memory->PeekU16(pc + 1));
 					break;
 
 				case ADDR_ABSX:
-					ImGui::Text("$%04X,X", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X,X", memory->PeekU16(pc + 1));
 					break;
 
 				case ADDR_ABSY:
-					ImGui::Text("$%04X,Y", memory->ReadU16(pc + 1));
+					ImGui::Text("$%04X,Y", memory->PeekU16(pc + 1));
 					break;
 
 				case ADDR_REL:
-					ImGui::Text("$%04X", pc + instruction.length() + memory->ReadS8(pc + 1));
+					ImGui::Text("$%04X", pc + instruction.length() + memory->PeekS8(pc + 1));
 					break;
 
 				case ADDR_IMPL:
@@ -471,6 +512,8 @@ void DebuggerInterface::DrawDisassembly()
 			ImGui::PopStyleColor();
 
 		pc += instruction.length();
+
+		ImGui::PopID();
 	}
 
 	ImGui::Columns(1);
@@ -484,6 +527,8 @@ void DebuggerInterface::DrawExecutionBreakpoints()
 
 	for (uint32_t breakpointIdx = 0; breakpointIdx < debugger->breakpoints.Length(); )
 	{
+		ImGui::PushID(breakpointIdx);
+
 		ImGui::Text("$%04X", debugger->breakpoints[breakpointIdx]);
 
 		ImGui::SameLine();
@@ -492,6 +537,8 @@ void DebuggerInterface::DrawExecutionBreakpoints()
 			debugger->breakpoints.RemoveIndex(breakpointIdx);
 		else
 			++breakpointIdx;
+
+		ImGui::PopID();
 	}
 
 	ImGui::EndChild();

@@ -42,8 +42,6 @@ void TestSuite::RunAutomated(const char* logFileName)
 			printf("[nestest]: Stopping automated test because of missing opcode implementation.\n");
 			break;
 		}
-
-		buffer += WritePostInstructionStateToLog(buffer, bufferSize - (buffer - bufferStart));
 	}
 
 	File::WriteFile(logFileName, bufferStart);
@@ -205,14 +203,6 @@ uint32_t TestSuite::WritePreInstructionStateToLog(char* buffer, uint32_t bufferS
 
 	// Newline
 	buffer += sprintf_s(buffer, bufferSize, "\n");
-
-	return buffer - bufferStart;
-}
-
-uint32_t TestSuite::WritePostInstructionStateToLog(char* buffer, uint32_t bufferSize)
-{
-	char* bufferStart = buffer;
-
 
 	return buffer - bufferStart;
 }

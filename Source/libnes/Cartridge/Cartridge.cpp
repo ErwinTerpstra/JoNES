@@ -2,6 +2,7 @@
 
 #include "Mapper.h"
 #include "NROM.h"
+#include "SxROM.h"
 
 #include "debug.h"
 
@@ -17,13 +18,24 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 	memcpy(&header, buffer, sizeof(CartridgeHeader_iNES));
 	assert(!header.IsNES20());
 
-	uint8_t mapperType = header.GetMapper();
-	assert(mapperType == 0);
-
 	// Delete previous mapper
 	SAFE_DELETE(mapper);
 
-	mapper = new NROM(header, buffer);
+	uint8_t mapperType = header.GetMapper();
+	switch (mapperType)
+	{
+		case 0:
+			mapper = new NROM(header, buffer);
+			break;
+
+		case 1:
+			mapper = new SxROM(header, buffer);
+			break;
+
+		default:
+			assert(false);
+			break;
+	}
 }
 
 uint8_t Cartridge::ReadMain(uint16_t address)

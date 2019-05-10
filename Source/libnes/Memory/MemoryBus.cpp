@@ -21,9 +21,20 @@ uint8_t MemoryBus::PeekU8(uint16_t address) const
 	return interface->Peek(address);
 }
 
+uint16_t MemoryBus::PeekU16(uint16_t address) const
+{
+	return PeekU8(address) | (PeekU8(address + 1) << 8);
+}
+
 int8_t MemoryBus::ReadS8(uint16_t address) const
 {
 	uint8_t value = interface->Read(address);
+	return REINTERPRET(value, int8_t);
+}
+
+int8_t MemoryBus::PeekS8(uint16_t address) const
+{
+	uint8_t value = interface->Peek(address);
 	return REINTERPRET(value, int8_t);
 }
 

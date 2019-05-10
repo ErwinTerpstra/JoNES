@@ -57,7 +57,7 @@ const Instruction& CPU::ExecuteNextInstruction()
 const Instruction& CPU::DecodeInstruction(uint16_t address) const
 {
 	// Read the opcode
-	uint8_t opcode = device->mainMemory->ReadU8(address);
+	uint8_t opcode = device->mainMemory->PeekU8(address);
 
 	// Read the instruction description from the instruction map
 	return INSTRUCTION_MAP[opcode];
@@ -254,7 +254,7 @@ void CPU::dec(const Instruction& instruction, uint16_t operandAddress)
 	
 	value = ALU::dec(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::dex(const Instruction& instruction, uint16_t operandAddress)
@@ -274,7 +274,7 @@ void CPU::inc(const Instruction& instruction, uint16_t operandAddress)
 
 	value = ALU::inc(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::inx(const Instruction& instruction, uint16_t operandAddress)

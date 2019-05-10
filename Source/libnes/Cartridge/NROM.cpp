@@ -21,8 +21,8 @@ NROM::NROM(const CartridgeHeader_iNES& header, const uint8_t* buffer) : Mapper(h
 
 NROM::~NROM()
 {
-	SAFE_DELETE(prgRom);
-	SAFE_DELETE(chrRom);
+	SAFE_DELETE_ARRAY(prgRom);
+	SAFE_DELETE_ARRAY(chrRom);
 }
 
 uint8_t NROM::ReadMain(uint16_t address)
