@@ -294,7 +294,7 @@ void CPU::asl(const Instruction& instruction, uint16_t operandAddress)
 
 	value = ALU::asl(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::rol(const Instruction& instruction, uint16_t operandAddress)
@@ -304,7 +304,7 @@ void CPU::rol(const Instruction& instruction, uint16_t operandAddress)
 
 	value = ALU::rol(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::lsr(const Instruction& instruction, uint16_t operandAddress)
@@ -314,7 +314,7 @@ void CPU::lsr(const Instruction& instruction, uint16_t operandAddress)
 
 	value = ALU::lsr(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::ror(const Instruction& instruction, uint16_t operandAddress)
@@ -324,7 +324,7 @@ void CPU::ror(const Instruction& instruction, uint16_t operandAddress)
 
 	value = ALU::ror(registers, value);
 
-	device->mainMemory->WriteU16(address, value);
+	device->mainMemory->WriteU8(address, value);
 }
 
 void CPU::asl_a(const Instruction& instruction, uint16_t operandAddress)
