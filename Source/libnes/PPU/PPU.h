@@ -38,6 +38,8 @@ namespace libnes
 		uint8_t mask;
 		uint8_t oamAddress;
 
+		uint8_t readBuffer;
+
 		uint16_t vramAddress;
 		uint16_t temporaryAddress;
 		uint8_t fineX;

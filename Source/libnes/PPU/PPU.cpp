@@ -174,9 +174,17 @@ uint8_t PPU::ReadRegister(uint16_t address)
 		case 0x07:
 		{
 			uint8_t value = device->videoMemory->ReadU8(registers.vramAddress);
+
+			uint8_t result;
+			if (address < NES_PPU_PALETTE_RAM)
+				result = registers.readBuffer;	// Reads from video memory are placed in a read buffer and are only returned on the next read from this register
+			else
+				result = value; // Reads from palette RAM are returned immediately
+
+			registers.readBuffer = value;
 			IncrementAddress();
 
-			return value;
+			return result;
 		}
 
 		default:
@@ -287,6 +295,7 @@ void PPU::EvaluateSprites()
 	// Clear secondary OAM
 	memset(&secondaryOAM[0], 0xFF, NES_PPU_SECONDARY_OAM_SIZE);
 
+	uint16_t currentScanline = scanline;
 	uint8_t spriteHeight = NES_PPU_TILE_SIZE << (READ_BIT(registers.control, NES_PPU_CONTROL_BIT_SPRITE_HEIGHT));
 
 	uint8_t n = 0;
@@ -297,7 +306,7 @@ void PPU::EvaluateSprites()
 		Sprite* sprite = reinterpret_cast<Sprite*>(primaryOAM + (n * NES_PPU_SPRITE_SIZE));
 
 		// Check if the sprite is in range on this scanline
-		bool spriteActive = scanline >= sprite->y && scanline < sprite->y + spriteHeight;
+		bool spriteActive = currentScanline >= sprite->y && currentScanline < sprite->y + spriteHeight;
 		if (spriteActive)
 		{
 			// Copy the sprite into secondary oam
@@ -317,7 +326,7 @@ void PPU::EvaluateSprites()
 	while (n < NES_PPU_PRIMARY_OAM_SPRITES)
 	{
 		uint8_t y = primaryOAM[(n * NES_PPU_SPRITE_SIZE) + m];
-		if (scanline >= y && scanline < y + spriteHeight)
+		if (currentScanline >= y && currentScanline < y + spriteHeight)
 			registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_SPRITE_OVERFLOW);
 		else
 			m = (m + 1) & 0x03; // Sprite overflow bug
