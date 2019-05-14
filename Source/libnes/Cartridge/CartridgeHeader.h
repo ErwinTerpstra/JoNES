@@ -11,6 +11,8 @@ namespace libnes
 		MIRROR_NONE,
 		MIRROR_HORIZONTAL,
 		MIRROR_VERTICAL,
+		MIRROR_ONE_LOWER_BANK,
+		MIRROR_ONE_UPPER_BANK
 	};
 
 	struct CartridgeHeader_iNES

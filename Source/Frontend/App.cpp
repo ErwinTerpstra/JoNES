@@ -142,22 +142,9 @@ void App::Update()
 
 	interfaceController->Update(deltaTime);
 	debuggerInterface->Update(deltaTime);
-
-	HandleInterface();
 }
 
 void App::Render()
 {
 	renderer->Render();
-}
-
-void App::HandleInterface()
-{
-	ImGui::Begin("Settings");
-	
-	static bool vsync = false;
-	if (ImGui::Checkbox("V-Sync", &vsync))
-		window->SetSwapInterval(vsync ? 1 : 0);
-
-	ImGui::End();
 }

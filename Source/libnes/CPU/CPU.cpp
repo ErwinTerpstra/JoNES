@@ -191,10 +191,7 @@ uint8_t CPU::ReadAddressed(AddressingModeIdentifier mode, uint16_t operandAddres
 void CPU::WriteAddressed(AddressingModeIdentifier mode, uint16_t operandAddress, uint8_t value)
 {
 	Address address = ResolveAddress(mode, operandAddress);
-
-	//if (address.crossedPage)
-		//++cycles;
-
+	
 	device->mainMemory->WriteU8(address, value);
 }
 
@@ -386,8 +383,8 @@ void CPU::branch(const Instruction& instruction, uint16_t operandAddress)
 
 void CPU::brk(const Instruction& instruction, uint16_t operandAddress)
 {
-	PushStackU16(registers.pc);
-	PushStackU8(registers.p | 0x30); // BRK sets bits 4 & 5 when pushing
+	PushStackU16(registers.pc + 1);		// BRK has a quick where it pushes PC + 1
+	PushStackU8(registers.p | 0x30);	// BRK sets bits 4 & 5 when pushing
 
 	registers.SetFlag(FLAG_INTERRUPT_DISABLE);
 

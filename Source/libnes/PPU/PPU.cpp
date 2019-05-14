@@ -100,13 +100,16 @@ void PPU::Tick()
 			ShiftSpriteData();
 		}
 
-		// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
-		if (dot == 256)
-			EvaluateSprites();
+		if (drawSprites)
+		{
+			// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
+			if (dot == 256)
+				EvaluateSprites();
 
-		// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
-		if (dot == 320)
-			FetchSpriteData();
+			// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
+			if (dot == 320)
+				FetchSpriteData();
+		}
 	}
 		
 	// Handle VBlank
@@ -124,9 +127,12 @@ void PPU::Tick()
 		if (dot == 1)
 			registers.status = 0;
 
-		// Reset vertical part of VRAM address
-		if (dot >= 280 && dot <= 304)
-			ResetVertical();
+		if (drawBackground || drawSprites)
+		{
+			// Reset vertical part of VRAM address
+			if (dot >= 280 && dot <= 304)
+				ResetVertical();
+		}
 	}
 
 	// Handle NMI

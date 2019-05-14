@@ -46,8 +46,6 @@ namespace JoNES
 		void Update();
 		void Render();
 
-	private:
-		void HandleInterface();
 	};
 }
 

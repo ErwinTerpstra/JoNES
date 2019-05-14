@@ -199,7 +199,7 @@ uint8_t SxROM::ReadVideo(uint16_t address)
 
 uint8_t SxROM::PeekVideo(uint16_t address) const
 {
-	uint8_t bank = READ_BIT(address, 10);
+	uint8_t bank = READ_BIT(address, 12);
 	return chrBanks[bank][address & 0x0FFF];
 }
 
@@ -208,7 +208,7 @@ void SxROM::WriteVideo(uint16_t address, uint8_t value)
 	if (!usesChrRam)
 		return;
 
-	uint8_t bank = READ_BIT(address, 10);
+	uint8_t bank = READ_BIT(address, 12);
 	chrBanks[bank][address & 0x0FFF] = value;
 }
 
