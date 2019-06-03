@@ -27,6 +27,8 @@ namespace JoNES
 
 		InterfaceRenderer* interfaceRenderer;
 
+		bool emulatorFrameReady;
+
 		libnes::EventHandlerProxy<Renderer> vblankEnterred;
 
 	public:

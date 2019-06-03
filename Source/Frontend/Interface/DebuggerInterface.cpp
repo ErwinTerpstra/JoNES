@@ -46,18 +46,35 @@ DebuggerInterface::~DebuggerInterface()
 
 void DebuggerInterface::Update(float deltaTime)
 {
+	static bool showEmulatorWindow = true;
 	static bool showCPUWindow = true;
 	static bool showPPUWindow = true;
 	static bool showMemoryWindow = false;
 
+	if (showEmulatorWindow)
+		DrawEmulatorWindow(&showEmulatorWindow);
+
 	if (showCPUWindow)
 		DrawCPUWindow(&showCPUWindow);
-	
+
 	if (showPPUWindow)
 		DrawPPUWindow(&showPPUWindow);
-	
+
 	if (showMemoryWindow)
 		DrawMemoryWindow(&showMemoryWindow);
+}
+
+void DebuggerInterface::DrawEmulatorWindow(bool* open)
+{
+	ImGui::Begin("Emulator", open);
+
+	ImGui::LabelText("Speed", "%.0f%%", (debugger->GetCurrentSpeed() * 100));
+
+	float timeScale = debugger->GetTimeScale();
+	if (ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 20.0f, "%.1f", 2))
+		debugger->SetTimeScale(timeScale);
+
+	ImGui::End();
 }
 
 void DebuggerInterface::DrawCPUWindow(bool* open)

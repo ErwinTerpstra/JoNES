@@ -118,11 +118,6 @@ void SxROM::SelectBanks()
 
 }
 
-uint8_t SxROM::ReadMain(uint16_t address)
-{
-	return PeekMain(address);
-}
-
 uint8_t SxROM::PeekMain(uint16_t address) const
 {
 	// Not connected
@@ -192,11 +187,6 @@ void SxROM::WriteMain(uint16_t address, uint8_t value)
 	}
 }
 
-uint8_t SxROM::ReadVideo(uint16_t address)
-{
-	return PeekVideo(address);
-}
-
 uint8_t SxROM::PeekVideo(uint16_t address) const
 {
 	uint8_t bank = READ_BIT(address, 12);
@@ -212,26 +202,21 @@ void SxROM::WriteVideo(uint16_t address, uint8_t value)
 	chrBanks[bank][address & 0x0FFF] = value;
 }
 
-bool SxROM::GetInternalVideoRamA10(uint16_t address) const
+NametableMirroring SxROM::GetMirroring() const
 {
 	switch (registers.control & 0x03)
 	{
 	default:
 	case 0x00:
-		return false;					// One screen, lower bank
+		return MIRROR_ONE_BANK_LOWER;
 
 	case 0x01:
-		return true;					// One screen, upper bank
+		return MIRROR_ONE_BANK_UPPER;
 
 	case 0x02:
-		return TEST_BIT(address, 10);	// Vertical mirroring
+		return MIRROR_VERTICAL;
 
-	case 0x03: 
-		return TEST_BIT(address, 11);	// Horizontal mirroring
+	case 0x03:
+		return MIRROR_HORIZONTAL;
 	}
-}
-
-bool SxROM::GetInternalVideoRamEnabled(uint16_t address) const
-{
-	return TEST_BIT(address, 13);
 }

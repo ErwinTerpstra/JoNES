@@ -19,7 +19,7 @@ using namespace JoNES;
 using namespace libnes;
 
 Renderer::Renderer(Window* window, Emulator* emulator) : 
-	window(window), emulator(emulator), vblankEnterred(this, &Renderer::OnVBlankEnterred)
+	window(window), emulator(emulator), vblankEnterred(this, &Renderer::OnVBlankEnterred), emulatorFrameReady(false)
 {
 	emulator->device->ppu->vblankStarted.RegisterEventHandler(&vblankEnterred);
 }
@@ -93,6 +93,8 @@ void Renderer::RenderEmulator()
 	glDisable(GL_SCISSOR_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	LoadEmulatorFrameBuffer();
+
 	int windowWidth, windowHeight;
 	window->GetFrameBufferSize(&windowWidth, &windowHeight);
 
@@ -109,10 +111,14 @@ void Renderer::RenderEmulator()
 
 void Renderer::LoadEmulatorFrameBuffer()
 {
+	if (!emulatorFrameReady)
+		return;
+	
 	frameBufferTexture->Load(emulator->frameBuffer);
+	emulatorFrameReady = false;
 }
 
 void Renderer::OnVBlankEnterred()
 {
-	LoadEmulatorFrameBuffer();
+	emulatorFrameReady = true;
 }

@@ -25,11 +25,6 @@ NROM::~NROM()
 	SAFE_DELETE_ARRAY(chrRom);
 }
 
-uint8_t NROM::ReadMain(uint16_t address)
-{
-	return PeekMain(address);
-}
-
 uint8_t NROM::PeekMain(uint16_t address) const
 {
 	if (address < 0x8000)
@@ -45,11 +40,6 @@ uint8_t NROM::PeekMain(uint16_t address) const
 void NROM::WriteMain(uint16_t address, uint8_t value)
 {
 
-}
-
-uint8_t NROM::ReadVideo(uint16_t address)
-{
-	return PeekVideo(address);
 }
 
 uint8_t NROM::PeekVideo(uint16_t address) const
@@ -72,25 +62,4 @@ void NROM::WriteVideo(uint16_t address, uint8_t value)
 		assert(false);
 		return;
 	}
-}
-
-bool NROM::GetInternalVideoRamA10(uint16_t address) const
-{
-	switch (header.GetMirroring())
-	{
-	case MIRROR_HORIZONTAL:
-		return TEST_BIT(address, 11);
-
-	case MIRROR_VERTICAL:
-		return TEST_BIT(address, 10);
-
-	default:
-		assert(false);
-		return 0;
-	}
-}
-
-bool NROM::GetInternalVideoRamEnabled(uint16_t address) const
-{
-	return TEST_BIT(address, 13);
 }

@@ -13,7 +13,7 @@ using namespace libnes;
 
 Debugger::Debugger(Emulator* emulator) : emulator(emulator),
 	breakpoints(32), mainMemoryBreakpoints(32), videoMemoryBreakpoints(32),
-	paused(true), emulatorTime(0.0f), previousTime(0.0f)
+	paused(true), emulatorTime(0.0f), previousTime(0.0f), timeScale(1.0f)
 {
 	mainMemoryProxy = new DebuggerMemoryInterface(this, mainMemoryBreakpoints, emulator->device->mainMemory);
 	videoMemoryProxy = new DebuggerMemoryInterface(this, videoMemoryBreakpoints, emulator->device->videoMemory);
@@ -39,7 +39,14 @@ void Debugger::Resume()
 void Debugger::Reset()
 {
 	emulator->Reset();
+
 	emulatorTime = 0.0f;
+
+	lastMeasurementRealTime = previousTime;
+	lastMeasurementEmulatorTime = 0.0f;
+
+	currentSpeed = 0.0f;
+
 	paused = true;
 }
 
@@ -67,14 +74,11 @@ void Debugger::Update(float time)
 {
 	if (previousTime > 0.0f && !paused)
 	{
-		emulatorTime += time - previousTime;
+		emulatorTime += (time - previousTime) * timeScale;
 
 		float delta = emulatorTime - emulator->Time();
 		if (delta > 1.0f)
-		{
-			printf("[Debugger]: Warning! Emulator is %.2fs behind. Skipping to catch up...\n", delta);
 			emulatorTime = emulator->Time();
-		}
 
 		while (emulatorTime > emulator->Time())
 		{
@@ -83,6 +87,19 @@ void Debugger::Update(float time)
 			if (paused)
 				break;
 		}
+	}
+
+	// Measure the emulation speed
+	if (time - lastMeasurementRealTime > 1.0f)
+	{
+		float realDelta = time - lastMeasurementRealTime;
+		float emulatorDelta = emulator->Time() - lastMeasurementEmulatorTime;
+		
+		const float damping = 0.75f;
+		currentSpeed = currentSpeed * damping + (emulatorDelta / realDelta) * (1.0f - damping);
+
+		lastMeasurementEmulatorTime = emulator->Time();
+		lastMeasurementRealTime = time;
 	}
 
 	previousTime = time;

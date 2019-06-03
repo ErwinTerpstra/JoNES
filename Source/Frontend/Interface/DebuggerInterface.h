@@ -29,6 +29,7 @@ namespace JoNES
 		void Update(float deltaTime);
 
 	private:
+		void DrawEmulatorWindow(bool* open);
 		void DrawCPUWindow(bool* open);
 		void DrawPPUWindow(bool* open);
 		void DrawMemoryWindow(bool* open);

@@ -27,6 +27,12 @@ namespace libnes
 		float previousTime;
 		float emulatorTime;
 
+		float lastMeasurementRealTime;
+		float lastMeasurementEmulatorTime;
+
+		float timeScale;
+		float currentSpeed;
+
 	public:
 		Emulator* emulator;
 
@@ -46,6 +52,11 @@ namespace libnes
 		void Update(float time);
 
 		bool IsPaused() const { return paused; }
+		
+		float GetTimeScale() const { return timeScale; }
+		void SetTimeScale(float timeScale) { this->timeScale = timeScale; }
+
+		float GetCurrentSpeed() const { return currentSpeed; }
 	};
 }
 
