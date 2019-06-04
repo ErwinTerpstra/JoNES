@@ -1,6 +1,8 @@
 #ifndef _APP_H_
 #define _APP_H_
 
+#include "libnes/libnes.h"
+
 namespace libnes
 {
 	class Emulator;
@@ -19,8 +21,12 @@ namespace JoNES
 	class App
 	{
 	private:
-		float time;
-		float deltaTime;
+		float lastRenderTime;
+
+		float currentSpeed;
+
+		float lastMeasurementRealTime;
+		float lastMeasurementEmulatorTime;
 
 		Window* window;
 		InputHandler* inputHandler;
@@ -28,6 +34,9 @@ namespace JoNES
 		Renderer* renderer;
 		InterfaceController* interfaceController;
 		DebuggerInterface* debuggerInterface;
+
+		libnes::EventHandlerProxy<App> vblankEnterred;
+		bool emulatorFrameReady;
 			
 	public:
 		libnes::Emulator* emulator;
@@ -45,7 +54,13 @@ namespace JoNES
 
 		void Update();
 		void Render();
+		
+		float GetTime() const;
+		float GetCurrentSpeed() const { return currentSpeed; }
 
+	private:
+		void MeasureEmulationSpeed(float time);
+		void OnVBlankEnterred();
 	};
 }
 

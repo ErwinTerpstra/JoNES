@@ -5,11 +5,13 @@
 
 namespace JoNES
 {
+	class App;
 	class Texture;
 
 	class DebuggerInterface
 	{
 	private:
+		App* app;
 		libnes::Debugger* debugger;
 
 		Texture* patternTables[2];
@@ -23,10 +25,10 @@ namespace JoNES
 		bool jumpToPC;
 
 	public:
-		DebuggerInterface(libnes::Debugger* debugger);
+		DebuggerInterface(App* app, libnes::Debugger* debugger);
 		~DebuggerInterface();
 
-		void Update(float deltaTime);
+		void Update();
 
 	private:
 		void DrawEmulatorWindow(bool* open);

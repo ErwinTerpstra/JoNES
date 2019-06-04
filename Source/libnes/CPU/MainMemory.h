@@ -2,7 +2,7 @@
 #define _MAIN_MEMORY_H_
 
 #include "environment.h"
-#include "MemoryInterface.h"
+#include "Memory/MemoryInterface.h"
 
 namespace libnes
 {

@@ -19,18 +19,12 @@ using namespace JoNES;
 using namespace libnes;
 
 Renderer::Renderer(Window* window, Emulator* emulator) : 
-	window(window), emulator(emulator), vblankEnterred(this, &Renderer::OnVBlankEnterred), emulatorFrameReady(false)
-{
-	emulator->device->ppu->vblankStarted.RegisterEventHandler(&vblankEnterred);
-}
-
-bool Renderer::Init()
+	window(window), emulator(emulator)
 {
 	window->MakeCurrent();
 
 	GLenum glewStatus = glewInit();
-	if (glewStatus != GLEW_OK)
-		return false;
+	assert(glewStatus == GLEW_OK);
 
 	interfaceRenderer = new InterfaceRenderer(*window);
 	interfaceRenderer->Init();
@@ -45,11 +39,9 @@ bool Renderer::Init()
 
 	delete vertexShaderSource;
 	delete fragmentShaderSource;
-
-	return true;
 }
 
-void Renderer::Shutdown()
+Renderer::~Renderer()
 {
 	if (interfaceRenderer)
 		interfaceRenderer->Shutdown();
@@ -87,13 +79,13 @@ void Renderer::Render()
 
 void Renderer::RenderEmulator()
 {
+	LoadEmulatorFrameBuffer();
+
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	LoadEmulatorFrameBuffer();
 
 	int windowWidth, windowHeight;
 	window->GetFrameBufferSize(&windowWidth, &windowHeight);
@@ -111,14 +103,5 @@ void Renderer::RenderEmulator()
 
 void Renderer::LoadEmulatorFrameBuffer()
 {
-	if (!emulatorFrameReady)
-		return;
-	
 	frameBufferTexture->Load(emulator->frameBuffer);
-	emulatorFrameReady = false;
-}
-
-void Renderer::OnVBlankEnterred()
-{
-	emulatorFrameReady = true;
 }

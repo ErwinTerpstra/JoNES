@@ -26,24 +26,16 @@ namespace JoNES
 		Quad* frameBufferQuad;
 
 		InterfaceRenderer* interfaceRenderer;
-
-		bool emulatorFrameReady;
-
-		libnes::EventHandlerProxy<Renderer> vblankEnterred;
-
+		
 	public:
 		Renderer(Window* window, libnes::Emulator* emulator);
-
-		bool Init();
-		void Shutdown();
+		~Renderer();
 
 		void Render();
 		void LoadEmulatorFrameBuffer();
 
 	private:
 		void RenderEmulator();
-
-		void OnVBlankEnterred();
 	};
 }
 

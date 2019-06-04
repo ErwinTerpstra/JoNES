@@ -24,10 +24,7 @@ InterfaceController::InterfaceController(Window& window) : window(window)
 
 	for (int i = 0; i < IM_ARRAYSIZE(mouseCursors); ++i)
 		mouseCursors[i] = 0;
-}
 
-bool InterfaceController::Init()
-{
 	ImGuiIO& io = ImGui::GetIO();
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
@@ -77,10 +74,9 @@ bool InterfaceController::Init()
 	glfwSetKeyCallback(window.GetHandle(), GLFWCallback(KeyCallback));
 	glfwSetCharCallback(window.GetHandle(), GLFWCallback(CharCallback));
 
-	return true;
 }
 
-void InterfaceController::Shutdown()
+InterfaceController::~InterfaceController()
 {
 	for (ImGuiMouseCursor cursorIdx = 0; cursorIdx < ImGuiMouseCursor_COUNT; cursorIdx++)
 	{

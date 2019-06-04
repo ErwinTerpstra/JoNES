@@ -69,6 +69,7 @@ namespace libnes
 		uint8_t* secondaryOAM;
 
 		uint64_t cycles;
+		uint64_t frameFirstCycle;
 		uint16_t scanline;
 		
 		PPU_Registers registers;
@@ -83,8 +84,12 @@ namespace libnes
 		PPU(Device* device, uint8_t* frameBuffer);
 		~PPU();
 
+		void CatchupWhenNMIOcurred();
+
 		void Reset();
 
+		void Catchup(uint64_t masterClockCycle);
+		void CatchupToCPU();
 		void Tick();
 
 		uint8_t ReadRegister(uint16_t address);

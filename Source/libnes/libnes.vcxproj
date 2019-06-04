@@ -146,7 +146,7 @@
     <ClInclude Include="Cartridge\CartridgeHeader.h" />
     <ClInclude Include="environment.h" />
     <ClInclude Include="libnes.h" />
-    <ClInclude Include="Memory\MainMemory.h" />
+    <ClInclude Include="CPU\MainMemory.h" />
     <ClInclude Include="Memory\MemoryBus.h" />
     <ClInclude Include="Memory\MemoryInterface.h" />
     <ClInclude Include="Device.h" />
@@ -160,7 +160,7 @@
     <ClCompile Include="Emulator.cpp" />
     <ClCompile Include="CPU\opcodes.cpp" />
     <ClCompile Include="Input\Input.cpp" />
-    <ClCompile Include="Memory\MainMemory.cpp" />
+    <ClCompile Include="CPU\MainMemory.cpp" />
     <ClCompile Include="Memory\MemoryBus.cpp" />
     <ClCompile Include="PPU\PPU.cpp" />
     <ClCompile Include="PPU\VideoMemory.cpp" />

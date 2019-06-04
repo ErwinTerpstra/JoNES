@@ -39,11 +39,32 @@ void PPU::Reset()
 {
 	cycles = 0;
 	scanline = 0;
+	frameFirstCycle = 0;
 
 	memset(&registers, 0, sizeof(PPU_Registers));
 	memset(&latches, 0, sizeof(PPU_Latches));
 
 	nmiState = false;
+}
+
+void PPU::CatchupWhenNMIOcurred()
+{
+	uint64_t nextNmiCycle = frameFirstCycle + NES_PPU_CYCLES_PER_SCANLINE * NES_PPU_VBLANK_FIRST_SCANLINE + 1;
+	nextNmiCycle *= NES_NTSC_PPU_CLOCK_DIVIDER;
+
+	if (device->cpu->MasterClockCycles() >= nextNmiCycle)
+		CatchupToCPU();
+}
+
+void PPU::CatchupToCPU()
+{
+	Catchup(device->cpu->MasterClockCycles());
+}
+
+void PPU::Catchup(uint64_t masterClockCycle)
+{
+	while (MasterClockCycles() < masterClockCycle)
+		Tick();
 }
 
 void PPU::Tick()
@@ -145,7 +166,14 @@ void PPU::Tick()
 	// Increment scanline
 	if (dot == (NES_PPU_CYCLES_PER_SCANLINE - 1))
 	{
-		scanline = (scanline + 1) % (NES_PPU_LAST_SCANLINE + 1);
+		if (scanline >= NES_PPU_LAST_SCANLINE)
+		{
+			scanline = 0;
+			frameFirstCycle = cycles + 1;
+		}
+		else
+			++scanline;
+
 		registers.sprite0ActiveCurrentScanline = registers.sprite0ActiveNextScanline;
 	}
 
@@ -155,6 +183,8 @@ void PPU::Tick()
 
 uint8_t PPU::ReadRegister(uint16_t address)
 {
+	CatchupToCPU();
+
 	switch (address & 0x07)
 	{
 		case 0x02:
@@ -212,6 +242,8 @@ uint8_t PPU::PeekRegister(uint16_t address) const
 
 void PPU::WriteRegister(uint16_t address, uint8_t value)
 {
+	CatchupToCPU();
+
 	switch (address & 0x07)
 	{
 		case 0x00:
@@ -284,6 +316,8 @@ void PPU::WriteRegister(uint16_t address, uint8_t value)
 
 void PPU::PerformOAMDMA(uint8_t addressMSB)
 {
+	CatchupToCPU();
+
 	uint16_t address = addressMSB << 8;
 
 	for (uint16_t offset = 0; offset < NES_PPU_PRIMARY_OAM_SIZE; ++offset)

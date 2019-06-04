@@ -5,8 +5,6 @@
 
 #include "File.h"
 
-#include "TestSuite/TestSuite.h"
-
 #include "Window.h"
 
 #include "Input/InputHandler.h"
@@ -24,7 +22,7 @@
 using namespace JoNES;
 using namespace libnes;
 
-App::App()
+App::App() : vblankEnterred(this, &App::OnVBlankEnterred), emulatorFrameReady(false)
 {
 
 }
@@ -34,10 +32,17 @@ bool App::Init()
 	if (!glfwInit())
 		return false;
 
-	time = (float) glfwGetTime();
+	lastRenderTime = GetTime();
+
+	lastMeasurementRealTime = lastRenderTime;
+	lastMeasurementEmulatorTime = 0.0f;
+
+	currentSpeed = 0.0f;
 
 	emulator = new Emulator();
 	debugger = new Debugger(emulator);
+
+	emulator->device->ppu->vblankStarted.RegisterEventHandler(&vblankEnterred);
 	
 	window = Window::Create(1440, 720, "JoNES emulator");
 
@@ -50,22 +55,11 @@ bool App::Init()
 	window->SetSwapInterval(0);
 
 	renderer = new Renderer(window, emulator);
-	if (!renderer->Init())
-	{
-		Shutdown();
-		return false;
-	}
-
 	interfaceController = new InterfaceController(*window);
-	if (!interfaceController->Init())
-	{
-		Shutdown();
-		return false;
-	}
 
 	inputHandler = new InputHandler(emulator->device, window);
 
-	debuggerInterface = new DebuggerInterface(debugger);
+	debuggerInterface = new DebuggerInterface(this, debugger);
 	
 	return true;
 }
@@ -78,24 +72,10 @@ void App::Shutdown()
 	SAFE_DELETE(debugger);
 	SAFE_DELETE(emulator);
 
-	if (interfaceController)
-	{
-		interfaceController->Shutdown();
-		delete interfaceController;
-	}
+	SAFE_DELETE(interfaceController);
+	SAFE_DELETE(renderer);
 
-	if (renderer)
-	{
-		renderer->Shutdown();
-		delete renderer;
-	}
-
-	if (window)
-		delete window;
-
-	interfaceController = NULL;
-	renderer = NULL;
-	window = NULL;
+	SAFE_DELETE(window);
 
 	glfwTerminate();
 }
@@ -130,21 +110,58 @@ bool App::ShouldExit() const
 
 void App::Update()
 {
-	glfwPollEvents();
+	float currentTime = GetTime();
 
-	float currentTime = (float) glfwGetTime();
-	deltaTime = currentTime - time;
-	time = currentTime;
+	debugger->Update(currentTime);
 
-	inputHandler->Update();
-
-	debugger->Update(time);
-
-	interfaceController->Update(deltaTime);
-	debuggerInterface->Update(deltaTime);
+	Render();
 }
 
 void App::Render()
 {
+	float currentTime = GetTime();
+	float deltaTime = currentTime - lastRenderTime;
+
+	// Limit update rate to 60Hz
+	if (deltaTime < (1 / 60.0f))
+		return;
+
+	glfwPollEvents();
+
+	interfaceController->Update(deltaTime);
+	debuggerInterface->Update();
+
+	inputHandler->Update();
+
 	renderer->Render();
+
+	MeasureEmulationSpeed(currentTime);
+
+	lastRenderTime = currentTime;
+}
+
+float App::GetTime() const
+{
+	return (float)glfwGetTime();
+}
+
+void App::MeasureEmulationSpeed(float time)
+{
+	// Measure the emulation speed
+	if (time - lastMeasurementRealTime > 1.0f)
+	{
+		float realDelta = time - lastMeasurementRealTime;
+		float emulatorDelta = emulator->Time() - lastMeasurementEmulatorTime;
+
+		currentSpeed = emulatorDelta / realDelta;
+
+		lastMeasurementEmulatorTime = emulator->Time();
+		lastMeasurementRealTime = time;
+	}
+
+}
+
+void App::OnVBlankEnterred()
+{
+	Render();
 }

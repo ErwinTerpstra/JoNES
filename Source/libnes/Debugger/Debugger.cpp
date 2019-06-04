@@ -42,11 +42,6 @@ void Debugger::Reset()
 
 	emulatorTime = 0.0f;
 
-	lastMeasurementRealTime = previousTime;
-	lastMeasurementEmulatorTime = 0.0f;
-
-	currentSpeed = 0.0f;
-
 	paused = true;
 }
 
@@ -77,30 +72,13 @@ void Debugger::Update(float time)
 		emulatorTime += (time - previousTime) * timeScale;
 
 		float delta = emulatorTime - emulator->Time();
-		if (delta > 1.0f)
+		if (delta > timeScale)
 			emulatorTime = emulator->Time();
 
-		while (emulatorTime > emulator->Time())
-		{
+		while (emulatorTime > emulator->Time() && !paused)
 			Step();
-
-			if (paused)
-				break;
-		}
 	}
 
-	// Measure the emulation speed
-	if (time - lastMeasurementRealTime > 1.0f)
-	{
-		float realDelta = time - lastMeasurementRealTime;
-		float emulatorDelta = emulator->Time() - lastMeasurementEmulatorTime;
-		
-		const float damping = 0.75f;
-		currentSpeed = currentSpeed * damping + (emulatorDelta / realDelta) * (1.0f - damping);
-
-		lastMeasurementEmulatorTime = emulator->Time();
-		lastMeasurementRealTime = time;
-	}
 
 	previousTime = time;
 }

@@ -31,6 +31,8 @@ void Window::MakeCurrent() const
 
 void Window::SetSwapInterval(int interval) const
 {
+	MakeCurrent();
+
 	glfwSwapInterval(interval);
 }
 

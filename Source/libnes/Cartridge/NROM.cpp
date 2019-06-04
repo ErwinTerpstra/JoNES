@@ -44,22 +44,10 @@ void NROM::WriteMain(uint16_t address, uint8_t value)
 
 uint8_t NROM::PeekVideo(uint16_t address) const
 {
-	if (TEST_BIT(address, 13))
-	{
-		// Read from cartridge VRAM
-		assert(false);
-		return 0;
-	}
-	else
-		return chrRom[address % chrRomSize];
+	return chrRom[address & 0x1FFF];
 }
 
 void NROM::WriteVideo(uint16_t address, uint8_t value)
 {
-	if (TEST_BIT(address, 13))
-	{
-		// Write to cartridge VRAM
-		assert(false);
-		return;
-	}
+
 }

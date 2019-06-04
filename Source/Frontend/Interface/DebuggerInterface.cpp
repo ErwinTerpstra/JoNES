@@ -2,6 +2,8 @@
 
 #include "DebuggerInterface.h"
 
+#include "App.h"
+
 #include "Rendering/Texture.h"
 
 #include "TestSuite/TestSuite.h"
@@ -12,7 +14,7 @@
 using namespace libnes;
 using namespace JoNES;
 
-DebuggerInterface::DebuggerInterface(Debugger* debugger) : debugger(debugger)
+DebuggerInterface::DebuggerInterface(App* app, Debugger* debugger) : app(app), debugger(debugger)
 {
 	for (uint32_t i = 0; i < 2; ++i)
 		patternTables[i] = new Texture(NES_PPU_PATTERN_TABLE_WIDTH, NES_PPU_PATTERN_TABLE_HEIGHT, false);
@@ -44,7 +46,7 @@ DebuggerInterface::~DebuggerInterface()
 	SAFE_DELETE_ARRAY(frameBuffer);
 }
 
-void DebuggerInterface::Update(float deltaTime)
+void DebuggerInterface::Update()
 {
 	static bool showEmulatorWindow = true;
 	static bool showCPUWindow = true;
@@ -68,10 +70,10 @@ void DebuggerInterface::DrawEmulatorWindow(bool* open)
 {
 	ImGui::Begin("Emulator", open);
 
-	ImGui::LabelText("Speed", "%.0f%%", (debugger->GetCurrentSpeed() * 100));
+	ImGui::LabelText("Actual speed", "%.0f%%", app->GetCurrentSpeed() * 100);
 
 	float timeScale = debugger->GetTimeScale();
-	if (ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 20.0f, "%.1f", 2))
+	if (ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 20.0f, "%.1fx", 2))
 		debugger->SetTimeScale(timeScale);
 
 	ImGui::End();

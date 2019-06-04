@@ -9,17 +9,17 @@
 
 #include "Cartridge/Cartridge.h"
 
+#include "Memory/MemoryBus.h"
+#include "Memory/MemoryInterface.h"
+#include "Memory/MemoryProxy.h"
+
 #include "CPU/CPU.h"
 #include "CPU/Instruction.h"
 #include "CPU/Registers.h"
+#include "CPU/MainMemory.h"
 
 #include "PPU/PPU.h"
 #include "PPU/VideoMemory.h"
-
-#include "Memory/MemoryBus.h"
-#include "Memory/MainMemory.h"
-#include "Memory/MemoryInterface.h"
-#include "Memory/MemoryProxy.h"
 
 #include "Input/Input.h"
 #include "Input/Controller.h"

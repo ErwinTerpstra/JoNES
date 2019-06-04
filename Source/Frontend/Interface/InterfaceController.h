@@ -18,9 +18,7 @@ namespace JoNES
 
 	public:
 		InterfaceController(Window& window);
-
-		bool Init();
-		void Shutdown();
+		~InterfaceController();
 
 		void Update(float dt);
 

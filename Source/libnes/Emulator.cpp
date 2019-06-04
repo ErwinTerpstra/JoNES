@@ -5,10 +5,10 @@
 #include "Device.h"
 
 #include "Memory/MemoryBus.h"
-#include "Memory/MainMemory.h"
 
 #include "CPU/CPU.h"
 #include "CPU/Instruction.h"
+#include "CPU/MainMemory.h"
 
 #include "PPU/PPU.h"
 #include "PPU/VideoMemory.h"
@@ -78,8 +78,7 @@ const Instruction& Emulator::ExecuteNextInstruction()
 	const Instruction& instruction = device->cpu->ExecuteNextInstruction();
 
 	// Sync the PPU
-	while (device->ppu->MasterClockCycles() < device->cpu->MasterClockCycles())
-		device->ppu->Tick();
+	device->ppu->CatchupWhenNMIOcurred();
 
 	return instruction;
 }
