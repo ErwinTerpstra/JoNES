@@ -7,3 +7,4 @@ Source/Frontend/Release/
 Source/Release/
 *.vspx
 *.deb
+*.diagsession

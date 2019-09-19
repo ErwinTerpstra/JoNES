@@ -8,7 +8,9 @@ namespace libnes
 
 	class Input;
 
-	class MemoryBus;
+	class MainMemory;
+	class VideoMemory;
+
 	class Cartridge;
 
 	struct Device
@@ -18,8 +20,8 @@ namespace libnes
 
 		Input* input;
 
-		MemoryBus* mainMemory;
-		MemoryBus* videoMemory;
+		MainMemory* mainMemory;
+		VideoMemory* videoMemory;
 
 		Cartridge* cartridge;
 	};

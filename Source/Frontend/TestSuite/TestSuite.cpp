@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include "TestSuite.h"
-#include "TestMemoryInterface.h"
 
 #include "File.h"
 
@@ -12,12 +11,12 @@ using namespace JoNES;
 
 TestSuite::TestSuite(Emulator* emulator) : emulator(emulator)
 {
-	memoryProxy = new TestMemoryInterface(emulator->device->mainMemory);
+
 }
 
 TestSuite::~TestSuite()
 {
-	SAFE_DELETE(memoryProxy);
+
 }
 
 void TestSuite::RunAutomated(const char* logFileName)
@@ -51,7 +50,7 @@ uint32_t TestSuite::WritePreInstructionStateToLog(char* buffer, uint32_t bufferS
 {
 	CPU* cpu = emulator->device->cpu;
 	PPU* ppu = emulator->device->ppu;
-	MemoryBus* memory = emulator->device->mainMemory;
+	MainMemory* memory = emulator->device->mainMemory;
 	Registers& registers = cpu->registers;
 
 	uint16_t pc = registers.pc;

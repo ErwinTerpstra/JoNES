@@ -54,12 +54,6 @@ uint16_t MemoryBus::ReadU16_NoPageCross(uint16_t address) const
 	return ReadU8(address) | (ReadU8(msbAddress) << 8);
 }
 
-void MemoryBus::Read(uint8_t* buffer, uint16_t address, uint16_t length) const
-{
-	for (uint8_t offset = 0; offset < length; ++offset)
-		buffer[offset] = ReadU8(address + offset);
-}
-
 void MemoryBus::WriteU8(uint16_t address, uint8_t value) const
 {
 	interface->Write(address, value);

@@ -34,8 +34,6 @@ namespace libnes
 		uint16_t ReadU16_ZeroPage(uint8_t offset) const;
 		uint16_t PeekU16(uint16_t address) const;
 
-		void Read(uint8_t* buffer, uint16_t address, uint16_t length) const;
-
 		void WriteU8(uint16_t address, uint8_t value) const;
 		void WriteU16(uint16_t address, uint16_t value) const;
 	};

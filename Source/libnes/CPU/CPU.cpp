@@ -3,7 +3,7 @@
 #include "ALU.h"
 
 #include "Device.h"
-#include "Memory/MemoryBus.h"
+#include "MainMemory.h"
 
 #include "debug.h"
 
@@ -135,7 +135,7 @@ uint16_t CPU::PopStackU16()
 
 Address CPU::ResolveAddress(AddressingModeIdentifier mode, uint16_t operandAddress) const
 {
-	MemoryBus* memory = device->mainMemory;
+	MainMemory* memory = device->mainMemory;
 
 	switch (mode)
 	{

@@ -25,10 +25,10 @@ MainMemory::~MainMemory()
 	ram = NULL;
 }
 
-uint8_t MainMemory::Read(uint16_t address)
+uint8_t MainMemory::ReadU8(uint16_t address)
 {
 	if (address < 0x2000)
-		return ram[address % NES_CPU_RAM_SIZE];
+		return ram[address & 0x1FFF];
 	
 	if (address < 0x4000)
 		return device->ppu->ReadRegister(address);
@@ -47,10 +47,10 @@ uint8_t MainMemory::Read(uint16_t address)
 		return 0;
 }
 
-uint8_t MainMemory::Peek(uint16_t address) const
+uint8_t MainMemory::PeekU8(uint16_t address) const
 {
 	if (address < 0x2000)
-		return ram[address % NES_CPU_RAM_SIZE];
+		return ram[address & 0x1FFF];
 
 	if (address < 0x4000)
 		return device->ppu->PeekRegister(address);
@@ -69,11 +69,11 @@ uint8_t MainMemory::Peek(uint16_t address) const
 		return 0;
 }
 
-void MainMemory::Write(uint16_t address, uint8_t value)
+void MainMemory::WriteU8(uint16_t address, uint8_t value)
 {
 	if (address < 0x2000)
 	{
-		ram[address % NES_CPU_RAM_SIZE] = value;
+		ram[address & 0x1FFFF] = value;
 		return;
 	}
 	

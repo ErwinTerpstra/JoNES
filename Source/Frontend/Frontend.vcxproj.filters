@@ -75,9 +75,6 @@
     <ClInclude Include="TestSuite\TestSuite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TestSuite\TestMemoryInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Interface\DebuggerInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>

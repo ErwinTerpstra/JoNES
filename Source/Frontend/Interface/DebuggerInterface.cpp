@@ -261,7 +261,7 @@ void DebuggerInterface::DrawPPUWindow(bool* open)
 
 void DebuggerInterface::DrawMemoryWindow(bool* open)
 {
-	MemoryBus* memoryBus = debugger->emulator->device->mainMemory;
+	MainMemory* memoryBus = debugger->emulator->device->mainMemory;
 
 	ImGui::Begin("Memory", open);
 
@@ -409,7 +409,7 @@ void DebuggerInterface::DrawDisassembly()
 	Device* device = debugger->emulator->device;
 
 	CPU* cpu = device->cpu;
-	MemoryBus* memory = device->mainMemory;
+	MainMemory* memory = device->mainMemory;
 	Registers& registers = cpu->registers;
 	
 	jumpToPC |= ImGui::Button("Jump to PC");

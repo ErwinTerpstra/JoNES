@@ -1,8 +1,11 @@
 #include "PPU.h"
 
+
 #include "Device.h"
 #include "CPU/CPU.h"
-#include "Memory/MemoryBus.h"
+#include "CPU/MainMemory.h"
+
+#include "VideoMemory.h"
 
 #include "util.h"
 
@@ -96,18 +99,16 @@ void PPU::Tick()
 					// After fetching, increment course X
 					IncrementCourseX();
 				}
-
 				// Load new data into shift registers at the first dot of each 8-dot cycle
-				if (localDot == 1)
+				else if (localDot == 1)
 					LoadShiftRegisters();
 			}
 
 			// Increment fine Y after the last visible dot
 			if (dot == 256)
 				IncrementY();
-
 			// Reset horizontal part of VRAM addresss
-			if (dot == 257)
+			else if (dot == 257)
 				ResetHorizontal();
 		}
 	}
@@ -126,23 +127,23 @@ void PPU::Tick()
 			// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
 			if (dot == 256)
 				EvaluateSprites();
-
 			// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
-			if (dot == 320)
+			else if (dot == 320)
 				FetchSpriteData();
 		}
 	}
-		
 	// Handle VBlank
-	if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE && dot == 1)
+	else if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE)
 	{
-		// Set vblank bit
-		registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
-		vblankStarted.Fire();
+		if (dot == 1)
+		{
+			// Set vblank bit
+			registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
+			vblankStarted.Fire();
+		}
 	}
-
 	// Handle pre-render scanline
-	if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
+	else if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
 	{
 		// Reset status flags
 		if (dot == 1)
@@ -607,79 +608,61 @@ void PPU::ShiftBackgroundData()
 
 void PPU::DrawDot(uint8_t x, uint8_t y, bool background, bool sprites)
 {
-	uint8_t color;
+	// Get background tile data
+	uint8_t backgroundTileData = 0;
 
-	if (background || sprites)
+	if (background)
 	{
-		// Get background tile data
-		uint8_t backgroundTileData = 0;
+		uint8_t tileBit = 15 - registers.fineX;
 
-		if (background)
-		{
-			uint8_t tileBit = 15 - registers.fineX;
-
-			// Get bit 0 & 1 of the palette index from the top bit in the tile data
-			backgroundTileData |= READ_BIT(registers.tileDataLow, tileBit) << 0;
-			backgroundTileData |= READ_BIT(registers.tileDataHigh, tileBit) << 1;
-		}
-
-		// Get sprite tile data
-		uint8_t spriteTileData = 0;
-		uint8_t spritePriority = 1;
-
-		uint8_t spriteIndex = SelectSprite();
-
-		if (sprites && spriteIndex < NES_PPU_SECONDARY_OAM_SPRITES)
-		{
-			PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
-
-			// Get bit 0 & 1
-			spriteTileData |= READ_BIT(spriteRegister.tileDataLow, 7) << 0;
-			spriteTileData |= READ_BIT(spriteRegister.tileDataHigh, 7) << 1;
-
-			// Read the priority bit from the sprite attributes
-			spritePriority = READ_BIT(spriteRegister.attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_PRIORITY);
-
-			// Handle sprite 0 hit
-			if (spriteIndex == 0 && registers.sprite0ActiveCurrentScanline && spriteTileData != 0 && backgroundTileData != 0)
-				registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_SPRITE0_HIT);
-		}
-		
-		// Determine background/sprite priority
-		uint8_t paletteIndex;
-		if (spriteTileData != 0 && (backgroundTileData == 0 || spritePriority == 0))
-		{
-			PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
-
-			// Bit 0 & 1 come from the tile data
-			paletteIndex = spriteTileData;
-
-			// Bit 2 & 3 come from the sprite attributes
-			paletteIndex |= (spriteRegister.attributes & 0x03) << 2;
-
-			// Bit 4 is set for sprites
-			paletteIndex = SET_BIT(paletteIndex, 4);
-		}
-		else if (backgroundTileData != 0)
-		{
-			// Bit 0 & 1 come from the tile data
-			paletteIndex = backgroundTileData;
-
-			uint8_t attributeBit = 7 - registers.fineX;
-
-			// Get bit 2 & 3 of the palette index from the attribute data
-			paletteIndex |= READ_BIT(registers.attributeLow, attributeBit) << 2;
-			paletteIndex |= READ_BIT(registers.attributeHigh, attributeBit) << 3;
-		}
-		else
-			paletteIndex = 0;
-						
-		// Read palette color
-		uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
-		color = device->videoMemory->ReadU8(paletteAddress);
+		// Get bit 0 & 1 of the palette index from the top bit in the tile data
+		backgroundTileData = READ_BIT(registers.tileDataLow, tileBit) | (READ_BIT(registers.tileDataHigh, tileBit) << 1);
 	}
-	else
-		color = device->videoMemory->ReadU8(NES_PPU_PALETTE_RAM);
+
+	// Get sprite tile data
+	uint8_t spriteTileData = 0;
+	uint8_t spritePriority = 1;
+
+	uint8_t spriteIndex = SelectSprite();
+
+	if (sprites && spriteIndex < NES_PPU_SECONDARY_OAM_SPRITES)
+	{
+		PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
+
+		// Get bit 0 & 1
+		spriteTileData = READ_BIT(spriteRegister.tileDataLow, 7) | (READ_BIT(spriteRegister.tileDataHigh, 7) << 1);
+
+		// Read the priority bit from the sprite attributes
+		spritePriority = READ_BIT(spriteRegister.attributes, NES_PPU_SPRITE_ATTRIBUTE_BIT_PRIORITY);
+
+		// Handle sprite 0 hit
+		if (spriteIndex == 0 && registers.sprite0ActiveCurrentScanline && spriteTileData != 0 && backgroundTileData != 0)
+			registers.status = SET_BIT(registers.status, NES_PPU_STATUS_BIT_SPRITE0_HIT);
+	}
+		
+	// Determine background/sprite priority
+	uint8_t paletteIndex = 0;
+	if (spriteTileData != 0 && (backgroundTileData == 0 || spritePriority == 0))
+	{
+		PPU_SpriteRegister& spriteRegister = registers.sprites[spriteIndex];
+
+		// Bit 0 & 1 come from the tile data
+		// Bit 2 & 3 come from the sprite attributes
+		// Bit 4 is set for sprites
+		paletteIndex = spriteTileData | ((spriteRegister.attributes & 0x03) << 2) | 0x10;
+	}
+	else if (backgroundTileData != 0)
+	{
+		uint8_t attributeBit = 7 - registers.fineX;
+
+		// Bit 0 & 1 come from the tile data
+		// Get bit 2 & 3 of the palette index from the attribute data
+		paletteIndex = backgroundTileData | (READ_BIT(registers.attributeLow, attributeBit) << 2) | (READ_BIT(registers.attributeHigh, attributeBit) << 3);
+	}
+						
+	// Read palette color
+	uint16_t paletteAddress = NES_PPU_PALETTE_RAM | paletteIndex;
+	uint8_t color = device->videoMemory->ReadU8(paletteAddress);
 
 	// Decode color and write to framebuffer
 	DecodeColor(color, frameBuffer + (y * NES_FRAME_WIDTH + x) * 3);

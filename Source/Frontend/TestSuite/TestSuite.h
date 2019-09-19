@@ -14,9 +14,7 @@ namespace JoNES
 	{
 	private:
 		libnes::Emulator* emulator;
-
-		TestMemoryInterface* memoryProxy;
-
+		
 	public:
 		TestSuite(libnes::Emulator* emulator);
 		~TestSuite();

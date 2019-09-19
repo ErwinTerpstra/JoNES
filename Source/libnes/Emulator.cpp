@@ -4,8 +4,6 @@
 
 #include "Device.h"
 
-#include "Memory/MemoryBus.h"
-
 #include "CPU/CPU.h"
 #include "CPU/Instruction.h"
 #include "CPU/MainMemory.h"
@@ -30,8 +28,8 @@ Emulator::Emulator()
 
 	device->input = new Input();
 
-	device->mainMemory = new MemoryBus(new MainMemory(device));
-	device->videoMemory = new MemoryBus(new VideoMemory(device));
+	device->mainMemory = new MainMemory(device);
+	device->videoMemory = new VideoMemory(device);
 
 	Reset();
 }

@@ -23,7 +23,7 @@ VideoMemory::~VideoMemory()
 	SAFE_DELETE_ARRAY(paletteRam);
 }
 
-uint8_t VideoMemory::Read(uint16_t address)
+uint8_t VideoMemory::ReadU8(uint16_t address)
 {
 	address &= 0x3FFF;
 
@@ -44,7 +44,7 @@ uint8_t VideoMemory::Read(uint16_t address)
 		return paletteRam[MapPaletteAddress(address)];
 }
 
-uint8_t VideoMemory::Peek(uint16_t address) const
+uint8_t VideoMemory::PeekU8(uint16_t address) const
 {
 	address &= 0x3FFF;
 
@@ -65,7 +65,7 @@ uint8_t VideoMemory::Peek(uint16_t address) const
 		return paletteRam[MapPaletteAddress(address)];
 }
 
-void VideoMemory::Write(uint16_t address, uint8_t value)
+void VideoMemory::WriteU8(uint16_t address, uint8_t value)
 {
 	address &= 0x3FFF;
 
