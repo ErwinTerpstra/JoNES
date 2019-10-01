@@ -5,15 +5,16 @@
 
 namespace libnes
 {
-	class MemoryInterface
+	struct MemoryInterface
 	{
-	public:
-		virtual ~MemoryInterface() = 0 { };
+		typedef uint8_t(*Read)(uint16_t address);
+		typedef uint8_t(*Peek)(uint16_t address);
 
-		virtual uint8_t Read(uint16_t address) = 0;
-		virtual uint8_t Peek(uint16_t address) const = 0;
+		typedef void (*Write)(uint16_t address, uint8_t value);
 
-		virtual void Write(uint16_t address, uint8_t value) = 0;
+		Peek peek;
+		Read read;
+		Write write;
 	};
 
 }

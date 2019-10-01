@@ -24,6 +24,7 @@ namespace JoNES
 		float lastRenderTime;
 
 		float currentSpeed;
+		float averageSpeed;
 
 		float lastMeasurementRealTime;
 		float lastMeasurementEmulatorTime;
@@ -57,6 +58,7 @@ namespace JoNES
 		
 		float GetTime() const;
 		float GetCurrentSpeed() const { return currentSpeed; }
+		float GetAverageSpeed() const { return averageSpeed; }
 
 	private:
 		void MeasureEmulationSpeed(float time);

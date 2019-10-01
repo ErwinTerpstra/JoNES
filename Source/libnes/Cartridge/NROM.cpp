@@ -27,11 +27,9 @@ NROM::~NROM()
 
 uint8_t NROM::PeekMain(uint16_t address) const
 {
+	// PRG RAM area, not supported
 	if (address < 0x8000)
-	{
-		// PRG RAM area, not supported
-		return 0;
-	}
+		return 0x00;
 
 	return prgRom[(address - 0x8000) % prgRomSize];
 }

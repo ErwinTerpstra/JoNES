@@ -9,9 +9,7 @@
 
 #include "Cartridge/Cartridge.h"
 
-#include "Memory/MemoryBus.h"
 #include "Memory/MemoryInterface.h"
-#include "Memory/MemoryProxy.h"
 
 #include "CPU/CPU.h"
 #include "CPU/Instruction.h"

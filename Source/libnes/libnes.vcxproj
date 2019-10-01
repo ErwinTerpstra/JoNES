@@ -100,6 +100,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -134,7 +137,6 @@
     <ClInclude Include="Input\DummyController.h" />
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Input\StandardController.h" />
-    <ClInclude Include="Memory\MemoryProxy.h" />
     <ClInclude Include="PPU\PPU.h" />
     <ClInclude Include="PPU\VideoMemory.h" />
     <ClInclude Include="Util\Event.h" />
@@ -147,7 +149,6 @@
     <ClInclude Include="environment.h" />
     <ClInclude Include="libnes.h" />
     <ClInclude Include="CPU\MainMemory.h" />
-    <ClInclude Include="Memory\MemoryBus.h" />
     <ClInclude Include="Memory\MemoryInterface.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="nes.h" />
@@ -161,7 +162,6 @@
     <ClCompile Include="CPU\opcodes.cpp" />
     <ClCompile Include="Input\Input.cpp" />
     <ClCompile Include="CPU\MainMemory.cpp" />
-    <ClCompile Include="Memory\MemoryBus.cpp" />
     <ClCompile Include="PPU\PPU.cpp" />
     <ClCompile Include="PPU\VideoMemory.cpp" />
   </ItemGroup>

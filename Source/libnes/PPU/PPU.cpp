@@ -77,44 +77,13 @@ void PPU::Tick()
 
 	bool col0 = dot <= 8;
 	bool drawBackground = TEST_BIT(registers.mask, NES_PPU_MASK_BIT_BACKGROUND) && (!col0 || TEST_BIT(registers.mask, NES_PPU_MASK_BIT_COL0_BACKGROUND));
-	bool drawSprites = TEST_BIT(registers.mask, NES_PPU_MASK_BIT_SPRITES) && (!col0|| TEST_BIT(registers.mask, NES_PPU_MASK_BIT_COL0_SPRITES));
-
-	if (drawBackground || drawSprites)
-	{
-		// Fetch data and increment vram address
-		if (scanline < NES_FRAME_HEIGHT || scanline == NES_PPU_PRE_RENDER_SCANLINE)
-		{
-			uint8_t localDot = dot & 0x07;
-
-			if ((dot >= 2 && dot <= 257) || (dot >= 322 && dot <= 337))
-			{
-				ShiftBackgroundData();
-
-				// Fetch data from memory at the last dot of each 8-dot cycle
-				if (localDot == 0)
-				{
-					// Load new data into the data latches
-					FetchBackgroundData();
-
-					// After fetching, increment course X
-					IncrementCourseX();
-				}
-				// Load new data into shift registers at the first dot of each 8-dot cycle
-				else if (localDot == 1)
-					LoadShiftRegisters();
-			}
-
-			// Increment fine Y after the last visible dot
-			if (dot == 256)
-				IncrementY();
-			// Reset horizontal part of VRAM addresss
-			else if (dot == 257)
-				ResetHorizontal();
-		}
-	}
-
+	bool drawSprites = TEST_BIT(registers.mask, NES_PPU_MASK_BIT_SPRITES) && (!col0 || TEST_BIT(registers.mask, NES_PPU_MASK_BIT_COL0_SPRITES));
+	
 	if (scanline < NES_FRAME_HEIGHT)
 	{
+		if (drawBackground || drawSprites)
+			HandleFetchAndShift(dot);
+
 		// Draw dots on visible scanlines
 		if (dot >= 1 && dot <= 256)
 		{
@@ -145,6 +114,9 @@ void PPU::Tick()
 	// Handle pre-render scanline
 	else if (scanline == NES_PPU_PRE_RENDER_SCANLINE)
 	{
+		if (drawBackground || drawSprites)
+			HandleFetchAndShift(dot);
+
 		// Reset status flags
 		if (dot == 1)
 			registers.status = 0;
@@ -158,7 +130,7 @@ void PPU::Tick()
 	}
 
 	// Handle NMI
-	bool nmiActive = TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_NMI_ENABLE) && TEST_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK);
+	bool nmiActive = TEST_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK) &&TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_NMI_ENABLE);
 	if (nmiActive && !nmiState)
 		device->cpu->TriggerNMI();
 
@@ -180,6 +152,40 @@ void PPU::Tick()
 
 	// Increment cycle count
 	++cycles;
+}
+
+void PPU::HandleFetchAndShift(uint16_t dot)
+{
+	if (!(dot >= 2 && dot <= 257) && !(dot >= 322 && dot <= 337))
+		return;
+
+	ShiftBackgroundData();
+
+	uint8_t localDot = dot & 0x07;
+
+	// Fetch data from memory at the last dot of each 8-dot cycle
+	if (localDot == 0)
+	{
+		// Load new data into the data latches
+		FetchBackgroundData();
+
+		// After fetching, increment course X
+		IncrementCourseX();
+
+		// Increment fine Y after the last visible dot
+		if (dot == 256)
+			IncrementY();
+	}
+	// Load new data into shift registers at the first dot of each 8-dot cycle
+	else if (localDot == 1)
+	{
+		LoadShiftRegisters();
+
+		// Reset horizontal part of VRAM addresss
+		if (dot == 257)
+			ResetHorizontal();
+	}
+
 }
 
 uint8_t PPU::ReadRegister(uint16_t address)

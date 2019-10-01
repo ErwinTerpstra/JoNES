@@ -20,23 +20,28 @@ namespace libnes
 
 	struct PPU_SpriteRegister
 	{
-		uint8_t tileDataHigh;
 		uint8_t tileDataLow;
+		uint8_t tileDataHigh;
 		uint8_t attributes;
 		uint8_t x;
 	};
 
 	struct PPU_Registers
 	{
-		uint16_t tileDataHigh;
-		uint16_t tileDataLow;
-		uint8_t attributeHigh;
-		uint8_t attributeLow;
-
 		uint8_t status;
 		uint8_t control;
 		uint8_t mask;
 		uint8_t oamAddress;
+
+		uint16_t tileDataLow;
+		uint16_t tileDataHigh;
+		uint8_t attributeLow;
+		uint8_t attributeHigh;
+
+		bool sprite0ActiveCurrentScanline;
+		bool sprite0ActiveNextScanline;
+
+		PPU_SpriteRegister sprites[NES_PPU_SECONDARY_OAM_SPRITES];
 
 		uint8_t readBuffer;
 
@@ -44,11 +49,6 @@ namespace libnes
 		uint16_t temporaryAddress;
 		uint8_t fineX;
 		bool secondWrite;
-
-		PPU_SpriteRegister sprites[NES_PPU_SECONDARY_OAM_SPRITES];
-
-		bool sprite0ActiveCurrentScanline;
-		bool sprite0ActiveNextScanline;
 	};
 
 	struct PPU_Latches
@@ -62,20 +62,25 @@ namespace libnes
 	class PPU
 	{
 	private:
-		Device * device;
+		Device* device;
+		
+		// Hot
+		uint64_t cycles;
+		uint16_t scanline;
+		bool nmiState;
+
+		// Medium
+		PPU_Registers registers;
+		PPU_Latches latches;
+
 		uint8_t* frameBuffer;
 
 		uint8_t* primaryOAM;
 		uint8_t* secondaryOAM;
-
-		uint64_t cycles;
-		uint64_t frameFirstCycle;
-		uint16_t scanline;
 		
-		PPU_Registers registers;
-		PPU_Latches latches;
+		// Cold
+		uint64_t frameFirstCycle;
 
-		bool nmiState;
 
 	public:
 		Event vblankStarted;
@@ -122,6 +127,8 @@ namespace libnes
 		uint8_t* GetOAM() { return primaryOAM; }
 
 	private:
+		void HandleFetchAndShift(uint16_t dot);
+
 		void EvaluateSprites();
 		void FetchSpriteData();
 		void ShiftSpriteData();

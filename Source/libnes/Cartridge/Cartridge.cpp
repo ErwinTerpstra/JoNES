@@ -70,10 +70,24 @@ void Cartridge::WriteVideo(uint16_t address, uint8_t value)
 
 bool Cartridge::GetInternalVideoRamA10(uint16_t address) const
 {
-	return mapper->GetInternalVideoRamA10(address);
+	switch (mapper->GetMirroring())
+	{
+		default:
+		case MIRROR_ONE_BANK_LOWER:
+			return false;
+
+		case MIRROR_ONE_BANK_UPPER:
+			return true;
+
+		case MIRROR_VERTICAL:
+			return TEST_BIT(address, 10);
+
+		case MIRROR_HORIZONTAL:
+			return TEST_BIT(address, 11);
+	}
 }
 
 bool Cartridge::GetInternalVideoRamEnabled(uint16_t address) const
 {
-	return mapper->GetInternalVideoRamEnabled(address);
+	return TEST_BIT(address, 13);
 }

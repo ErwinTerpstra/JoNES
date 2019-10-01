@@ -7,20 +7,19 @@
 
 #include "Util/Vector.h"
 
-#include "Memory/MemoryProxy.h"
-
 namespace libnes
 {
 
-	class DebuggerMemoryInterface : public MemoryProxy
+	class DebuggerMemoryInterface 
 	{
 	private:
 		Debugger* debugger;
 		const Vector<MemoryBreakpoint>& breakpoints;
 
+
 	public:
-		DebuggerMemoryInterface(Debugger* debugger, const Vector<MemoryBreakpoint>& breakpoints, MemoryBus* bus) : 
-			MemoryProxy(bus), debugger(debugger), breakpoints(breakpoints)
+		DebuggerMemoryInterface(Debugger* debugger, const Vector<MemoryBreakpoint>& breakpoints) : 
+			debugger(debugger), breakpoints(breakpoints)
 		{
 
 		}
@@ -37,7 +36,7 @@ namespace libnes
 				}
 			}
 
-			return MemoryProxy::Read(address);
+			//return MemoryProxy::Read(address);
 		}
 
 		void Write(uint16_t address, uint8_t value)
@@ -52,7 +51,7 @@ namespace libnes
 				}
 			}
 
-			MemoryProxy::Write(address, value);
+			//MemoryProxy::Write(address, value);
 		}
 	};
 

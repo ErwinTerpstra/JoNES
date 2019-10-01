@@ -70,7 +70,7 @@ void DebuggerInterface::DrawEmulatorWindow(bool* open)
 {
 	ImGui::Begin("Emulator", open);
 
-	ImGui::LabelText("Actual speed", "%.0f%%", app->GetCurrentSpeed() * 100);
+	ImGui::Text("Current speed: %4.0f%%; Average speed: %4.0f%%", app->GetCurrentSpeed() * 100, app->GetAverageSpeed() * 100);
 
 	float timeScale = debugger->GetTimeScale();
 	if (ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 20.0f, "%.1fx", 2))

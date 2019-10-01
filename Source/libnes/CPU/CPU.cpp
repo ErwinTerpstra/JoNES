@@ -9,7 +9,7 @@
 
 using namespace libnes;
 
-CPU::CPU(Device* device) : device(device)
+CPU::CPU(Device* device) : device(device), registers()
 {
 
 }

@@ -38,6 +38,7 @@ bool App::Init()
 	lastMeasurementEmulatorTime = 0.0f;
 
 	currentSpeed = 0.0f;
+	averageSpeed = 0.0f;
 
 	emulator = new Emulator();
 	debugger = new Debugger(emulator);
@@ -154,6 +155,11 @@ void App::MeasureEmulationSpeed(float time)
 		float emulatorDelta = emulator->Time() - lastMeasurementEmulatorTime;
 
 		currentSpeed = emulatorDelta / realDelta;
+
+		if (averageSpeed > 0.0f)
+			averageSpeed = averageSpeed * 0.6f + currentSpeed * 0.4f;
+		else
+			averageSpeed = currentSpeed;
 
 		lastMeasurementEmulatorTime = emulator->Time();
 		lastMeasurementRealTime = time;
