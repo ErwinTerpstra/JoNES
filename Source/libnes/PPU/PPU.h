@@ -129,6 +129,7 @@ namespace libnes
 	private:
 		void HandleFetchAndShift(uint16_t dot);
 
+		void HandleSprites(uint16_t dot);
 		void EvaluateSprites();
 		void FetchSpriteData();
 		void ShiftSpriteData();

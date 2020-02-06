@@ -39,6 +39,11 @@ namespace libnes
 		{
 			return header.GetMirroring();
 		}
+		
+		virtual bool CountScanline()
+		{
+			return false;
+		}
 	};
 }
 

@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "CPU/CPU.h"
 #include "CPU/MainMemory.h"
+#include "Cartridge/Cartridge.h"
 
 #include "VideoMemory.h"
 
@@ -84,6 +85,9 @@ void PPU::Tick()
 		if (drawBackground || drawSprites)
 			HandleFetchAndShift(dot);
 
+		if (drawSprites)
+			HandleSprites(dot);
+
 		// Draw dots on visible scanlines
 		if (dot >= 1 && dot <= 256)
 		{
@@ -91,15 +95,6 @@ void PPU::Tick()
 			ShiftSpriteData();
 		}
 
-		if (drawSprites)
-		{
-			// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
-			if (dot == 256)
-				EvaluateSprites();
-			// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
-			else if (dot == 320)
-				FetchSpriteData();
-		}
 	}
 	// Handle VBlank
 	else if (scanline == NES_PPU_VBLANK_FIRST_SCANLINE)
@@ -117,6 +112,9 @@ void PPU::Tick()
 		if (drawBackground || drawSprites)
 			HandleFetchAndShift(dot);
 
+		if (drawSprites)
+			HandleSprites(dot);
+
 		// Reset status flags
 		if (dot == 1)
 			registers.status = 0;
@@ -127,10 +125,11 @@ void PPU::Tick()
 			if (dot >= 280 && dot <= 304)
 				ResetVertical();
 		}
+
 	}
 
 	// Handle NMI
-	bool nmiActive = TEST_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK) &&TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_NMI_ENABLE);
+	bool nmiActive = TEST_BIT(registers.status, NES_PPU_STATUS_BIT_VBLANK) && TEST_BIT(registers.control, NES_PPU_CONTROL_BIT_NMI_ENABLE);
 	if (nmiActive && !nmiState)
 		device->cpu->TriggerNMI();
 
@@ -186,6 +185,28 @@ void PPU::HandleFetchAndShift(uint16_t dot)
 			ResetHorizontal();
 	}
 
+}
+
+void PPU::HandleSprites(uint16_t dot)
+{
+	if (dot == 256)
+	{
+		// Evaluate sprites on dot 256 (should actually be done during dot 65 - 256)
+		if (scanline < NES_FRAME_HEIGHT)
+			EvaluateSprites();
+	}
+	else if (dot == 260)
+	{
+		// Notify the cartridge hardware of the end of the scanline, this might trigger an interrupt. 
+		// Normally the cartridge handles this by listening to the PPU address bus bit 10. This bit change from 0 to 1 when the PPU starts fetching sprite data
+		// so this is not entirely accurate
+		device->cartridge->CountScanline();
+	}
+	else if (dot == 320)
+	{
+		// Fetch sprite tile data and initialize registers (should actually be done during dot 257 - 320)
+		FetchSpriteData();
+	}
 }
 
 uint8_t PPU::ReadRegister(uint16_t address)

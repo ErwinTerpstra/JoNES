@@ -62,13 +62,18 @@ namespace libnes
 
 		NametableMirroring GetMirroring() const
 		{
-			if (TEST_BIT(flags6, 3))
+			if (DisableMirroring())
 				return MIRROR_NONE;
 
 			if (TEST_BIT(flags6, 0))
 				return MIRROR_VERTICAL;
 			else
 				return MIRROR_HORIZONTAL;
+		}
+
+		bool DisableMirroring() const
+		{
+			return TEST_BIT(flags6, 3);
 		}
 	};
 }

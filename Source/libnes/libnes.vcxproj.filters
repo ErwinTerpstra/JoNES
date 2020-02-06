@@ -99,6 +99,9 @@
     <ClInclude Include="CPU\MainMemory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Cartridge\TxROM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Emulator.cpp">
@@ -130,6 +133,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CPU\MainMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Cartridge\TxROM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -76,7 +76,10 @@ const Instruction& Emulator::ExecuteNextInstruction()
 	const Instruction& instruction = device->cpu->ExecuteNextInstruction();
 
 	// Sync the PPU
-	device->ppu->CatchupWhenNMIOcurred();
+	//device->ppu->CatchupWhenNMIOcurred();
+	device->ppu->CatchupToCPU();
+
+	device->cpu->SetIRQ(device->cartridge->GetIRQ());
 
 	return instruction;
 }

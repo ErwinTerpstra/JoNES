@@ -16,6 +16,8 @@ namespace libnes
 		CartridgeHeader_iNES header;
 		Mapper* mapper;
 
+		bool irq;
+
 	public:
 		Cartridge();
 
@@ -31,6 +33,10 @@ namespace libnes
 
 		bool GetInternalVideoRamA10(uint16_t address) const;
 		bool GetInternalVideoRamEnabled(uint16_t address) const;
+
+		void CountScanline();
+
+		bool GetIRQ() const { return irq; }
 	};
 }
 

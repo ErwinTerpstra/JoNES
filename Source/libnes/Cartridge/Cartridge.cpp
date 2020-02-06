@@ -3,6 +3,7 @@
 #include "Mapper.h"
 #include "NROM.h"
 #include "SxROM.h"
+#include "TxROM.h"
 
 #include "debug.h"
 
@@ -30,6 +31,10 @@ void Cartridge::Load_iNES(uint8_t* buffer, uint32_t bufferSize)
 
 		case 1:
 			mapper = new SxROM(header, buffer);
+			break;
+
+		case 4:
+			mapper = new TxROM(header, buffer);
 			break;
 
 		default:
@@ -90,4 +95,9 @@ bool Cartridge::GetInternalVideoRamA10(uint16_t address) const
 bool Cartridge::GetInternalVideoRamEnabled(uint16_t address) const
 {
 	return TEST_BIT(address, 13);
+}
+
+void Cartridge::CountScanline()
+{
+	irq = mapper->CountScanline();
 }
